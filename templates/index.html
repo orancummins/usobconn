@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarch Connection Status Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #242736;
+            --border: #2e3241;
+            --text: #e1e4eb;
+            --text-dim: #8b8fa3;
+            --accent: #6c5ce7;
+            --accent-light: #a29bfe;
+            --green: #00b894;
+            --yellow: #fdcb6e;
+            --red: #e17055;
+            --blue: #0984e3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header h1 span {
+            font-size: 0.9rem;
+            font-weight: 400;
+            -webkit-text-fill-color: var(--text-dim);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--accent-light); }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--border); }
+
+        /* Progress Panel */
+        #progress-panel {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        #progress-panel.active { display: block; }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-header h3 {
+            font-size: 1.1rem;
+            color: var(--accent-light);
+        }
+
+        .progress-bar-container {
+            background: var(--surface2);
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-bar.indeterminate {
+            width: 30%;
+            animation: indeterminate 1.5s infinite ease-in-out;
+        }
+
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(430%); }
+        }
+
+        #progress-log {
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        #progress-log .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        #progress-log .log-entry .timestamp {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Session Selector */
+        .session-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .session-bar label {
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .session-bar select {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            min-width: 300px;
+        }
+
+        /* Data Table */
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-header h3 { font-size: 1.1rem; }
+
+        .search-input {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            width: 280px;
+        }
+
+        .search-input::placeholder { color: var(--text-dim); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        thead th:hover { color: var(--text); }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover { background: var(--surface2); }
+
+        td {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+
+        td.rank {
+            color: var(--text-dim);
+            font-weight: 600;
+            width: 60px;
+        }
+
+        td.inst-name { font-weight: 600; }
+
+        .provider-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .provider-badge.plaid { background: #2d3a8c33; color: #7c8cf8; }
+        .provider-badge.finicity { background: #0b6e4f33; color: #48d4a0; }
+        .provider-badge.mx { background: #8b5e3433; color: #e6a867; }
+        .provider-badge.unknown { background: var(--surface2); color: var(--text-dim); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .status-badge.ok { background: #00b89433; color: var(--green); }
+        .status-badge.issues { background: #fdcb6e33; color: var(--yellow); }
+        .status-badge.unavailable { background: #e1705533; color: var(--red); }
+
+        .mini-bar {
+            display: inline-block;
+            width: 60px;
+            height: 6px;
+            background: var(--surface2);
+            border-radius: 3px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .mini-bar-fill.high { background: var(--green); }
+        .mini-bar-fill.medium { background: var(--yellow); }
+        .mini-bar-fill.low { background: var(--red); }
+
+        .metric-text {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        /* Provider Distribution Chart */
+        .chart-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 16px;
+            color: var(--text-dim);
+        }
+
+        .bar-chart-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .bar-chart-label {
+            min-width: 130px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-chart-bar-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-chart-bar {
+            flex: 1;
+            height: 24px;
+            background: var(--surface2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-chart-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+
+        .bar-chart-value {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            white-space: nowrap;
+            min-width: 70px;
+        }
+
+        /* Score tooltip */
+        .score-row {
+            position: relative;
+        }
+        .score-tooltip {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 130px;
+            z-index: 100;
+            background: #1e2130;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            min-width: 310px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            pointer-events: none;
+        }
+        .score-row:hover .score-tooltip {
+            display: block;
+        }
+        .score-tooltip-header {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .score-tooltip-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            margin-bottom: 8px;
+        }
+        .score-tooltip-table th {
+            text-align: left;
+            color: var(--text-dim);
+            font-weight: 600;
+            padding: 3px 8px 3px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .score-tooltip-table td {
+            padding: 3px 8px 3px 0;
+            color: var(--text);
+        }
+        .score-tooltip-result {
+            font-size: 0.85rem;
+            color: var(--accent);
+            padding-top: 4px;
+            border-top: 1px solid var(--border);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+        }
+
+        .empty-state h2 {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .empty-state p { margin-bottom: 20px; }
+
+        /* Live stats during scrape */
+        #live-stats {
+            display: none;
+        }
+
+        #live-stats.active {
+            display: block;
+        }
+
+        .live-table-body tr {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* History Section — anchored to bottom */
+        .history-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+        }
+
+        .history-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .history-toggle:hover {
+            background: var(--surface2);
+        }
+
+        .history-toggle h3 {
+            font-size: 1.05rem;
+            color: var(--text);
+        }
+
+        .history-toggle .chevron {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            transition: transform 0.25s;
+        }
+
+        .history-toggle .chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .history-body {
+            display: none;
+            border-top: 1px solid var(--border);
+        }
+
+        .history-body.open {
+            display: block;
+        }
+
+        .history-scroll {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-bottom: 8px;
+        }
+
+        .history-run {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-run:last-child {
+            border-bottom: none;
+        }
+
+        .history-run-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-run-date {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--accent-light);
+        }
+
+        .history-run-meta {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .history-providers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 10px;
+        }
+
+        .history-prov-card {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+
+        .history-prov-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .history-prov-name.plaid { color: #7c8cf8; }
+        .history-prov-name.finicity { color: #48d4a0; }
+        .history-prov-name.mx { color: #e6a867; }
+
+        .history-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 4px;
+            font-size: 0.78rem;
+        }
+
+        .history-metric-label {
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .history-metric-val {
+            font-weight: 600;
+        }
+
+        .history-metric-val.green { color: var(--green); }
+        .history-metric-val.yellow { color: var(--yellow); }
+        .history-metric-val.red { color: var(--red); }
+        .history-metric-val.dim { color: var(--text-dim); }
+
+        .history-delta {
+            font-size: 0.7rem;
+            margin-left: 2px;
+        }
+
+        .history-delta.up { color: var(--green); }
+        .history-delta.down { color: var(--red); }
+        .history-delta.flat { color: var(--text-dim); }
+
+        /* History Chart */
+        .history-chart-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .history-chart-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .history-chart-section .chart-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 320px;
+        }
+
+        .chart-metric-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .chart-metric-tab {
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            transition: all 0.15s;
+        }
+
+        .chart-metric-tab:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .chart-metric-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Reserve space at bottom for the fixed history bar */
+        body {
+            padding-bottom: 52px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-section { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-input { width: 100%; }
+            .session-bar select { min-width: 200px; }
+            .history-providers { grid-template-columns: 1fr; }
+            .history-metrics { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* Info Modal */
+        .info-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--accent-light);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .info-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px 32px;
+            max-width: 620px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .modal-close:hover { color: var(--text); }
+        .modal h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--accent-light);
+        }
+        .modal h3 {
+            font-size: 0.95rem;
+            margin: 14px 0 6px;
+            color: var(--text);
+        }
+        .modal p, .modal li {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+        .modal ul {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+        .modal li { margin-bottom: 4px; }
+        .modal .formula {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.82rem;
+            color: var(--accent-light);
+            margin: 10px 0;
+        }
+        .modal .note {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            font-style: italic;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Monarch Connection Tracker <span>Financial Institution Status Monitor</span></h1>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="info-btn" onclick="document.getElementById('info-modal').classList.add('active')" title="How scoring works">i</button>
+                <button class="btn btn-primary" id="scrape-btn" onclick="startScrape()">
+                    &#x21BB; Scrape Now
+                </button>
+            </div>
+        </header>
+
+        <!-- Info Modal -->
+        <div class="modal-overlay" id="info-modal" onclick="if(event.target===this)this.classList.remove('active')">
+            <div class="modal">
+                <button class="modal-close" onclick="document.getElementById('info-modal').classList.remove('active')">&times;</button>
+                <h2>How Scoring Works</h2>
+
+                <p>This tool scrapes <a href="https://www.monarch.com/connection-status" style="color:var(--accent-light)">Monarch's Connection Status</a> page and computes quality scores for each data provider (Plaid, Finicity, MX).</p>
+
+                <h3>What Monarch Shows</h3>
+                <p>For every financial institution, Monarch displays three quality metrics using a 4-block rating bar:</p>
+                <ul>
+                    <li><strong>Success Rate</strong> &mdash; How reliably the connection works when users try to link their account.</li>
+                    <li><strong>Longevity</strong> &mdash; How long connections stay active and healthy over time.</li>
+                    <li><strong>Update Frequency</strong> &mdash; How often the connection pulls fresh transaction and balance data.</li>
+                </ul>
+
+                <h3>How We Read the Bars</h3>
+                <p>Each metric is shown as 4 small colored blocks. We count how many blocks are filled (non-gray) and convert to a percentage:</p>
+                <ul>
+                    <li><strong>0 blocks filled</strong> = Not rated (excluded from averages)</li>
+                    <li><strong>1 block</strong> = 25%</li>
+                    <li><strong>2 blocks</strong> = 50%</li>
+                    <li><strong>3 blocks</strong> = 75%</li>
+                    <li><strong>4 blocks</strong> = 100%</li>
+                </ul>
+                <p>Institutions with zero filled blocks are treated as <em>unrated</em> for that metric &mdash; they are not counted as 0%, they are simply excluded from the average. This avoids penalizing providers that serve many niche institutions that Monarch hasn't rated yet.</p>
+
+                <h3>Provider Weighted Score</h3>
+                <p>For each provider, we average each metric across all rated institutions, then combine them with these weights:</p>
+                <div class="formula">Weighted Score = (Success &times; 40%) + (Longevity &times; 30%) + (Updates &times; 30%)</div>
+                <p>Success is weighted highest because it directly reflects whether users can connect their accounts. The tooltips on the chart show exactly how many institutions were rated for each metric.</p>
+
+                <h3>Scrape History</h3>
+                <p>Each scrape is timestamped and stored. The history panel at the bottom compares runs over time, with delta arrows showing how each metric changed from the previous scrape. This lets you track whether providers are improving or degrading.</p>
+
+                <p class="note">Data is scraped directly from Monarch's public page. Scores may vary between runs as Monarch updates their ratings. The scraper scrolls through the full page to capture all institutions accurately.</p>
+            </div>
+        </div>
+
+        <!-- Progress Panel -->
+        <div id="progress-panel">
+            <div class="progress-header">
+                <h3 id="progress-title">Scraping in progress...</h3>
+                <span id="progress-pct" style="color: var(--accent-light); font-weight: 600;"></span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar indeterminate" id="progress-bar"></div>
+            </div>
+            <div id="progress-log"></div>
+        </div>
+
+        <!-- Live Stats (shown during/after scrape) -->
+        <div id="live-stats">
+            <div class="stats-grid" id="stats-cards"></div>
+            <div class="chart-section" id="charts-section"></div>
+        </div>
+
+        <!-- Provider Performance Chart -->
+        <div class="history-chart-section" id="perf-chart-section" style="display:none;">
+            <h3>Provider Performance Over Time</h3>
+            <p class="chart-subtitle">Weighted score (Success 40% · Longevity 30% · Updates 30%) per provider across scrape sessions</p>
+            <div class="chart-metric-tabs" id="chart-metric-tabs">
+                <button class="chart-metric-tab active" data-metric="weighted" onclick="switchChartMetric('weighted')">Weighted</button>
+                <button class="chart-metric-tab" data-metric="success" onclick="switchChartMetric('success')">Success</button>
+                <button class="chart-metric-tab" data-metric="longevity" onclick="switchChartMetric('longevity')">Longevity</button>
+                <button class="chart-metric-tab" data-metric="update" onclick="switchChartMetric('update')">Updates</button>
+            </div>
+            <div class="chart-canvas-wrapper">
+                <canvas id="perf-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Session Selector -->
+        <div class="session-bar" id="session-bar" style="display: none;">
+            <label>Scrape Session:</label>
+            <select id="session-select" onchange="loadSession(this.value)"></select>
+        </div>
+
+        <!-- Data Table -->
+        <div id="main-content">
+            <div class="empty-state" id="empty-state">
+                <h2>No Data Yet</h2>
+                <p>Click "Scrape Now" to fetch the latest connection status from Monarch.</p>
+            </div>
+            <div id="data-view" style="display: none;">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 id="table-title">Connection Status</h3>
+                        <input type="text" class="search-input" placeholder="Search institutions..."
+                               oninput="filterTable(this.value)">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('rank')">#</th>
+                                <th onclick="sortTable('institution_name')">Institution</th>
+                                <th onclick="sortTable('data_provider')">Provider</th>
+                                <th onclick="sortTable('success_pct')">Success</th>
+                                <th onclick="sortTable('longevity_pct')">Longevity</th>
+                                <th onclick="sortTable('update_pct')">Updates</th>
+                                <th onclick="sortTable('connection_status')">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connections-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Section (fixed to bottom, outside container) -->
+    <div class="history-section" id="history-section" style="display:none;">
+        <div class="history-toggle" onclick="toggleHistory()">
+            <h3>&#x23F1;&#xFE0F; Scrape History</h3>
+            <span class="chevron" id="history-chevron">&#x25BC;</span>
+        </div>
+        <div class="history-body" id="history-body">
+            <div class="history-scroll" id="history-scroll"></div>
+        </div>
+    </div>
+
+    <script>
+        // Base path for API calls — handles reverse proxy subpath (e.g. /usobconn)
+        const BASE = '{{ request.script_root }}';
+
+        let currentConnections = [];
+        let sortField = 'rank';
+        let sortAsc = true;
+        let currentSessionId = null;
+
+        // Initialize - load sessions
+        loadSessions();
+
+        async function loadSessions() {
+            try {
+                const res = await fetch(BASE + '/api/sessions');
+                const sessions = await res.json();
+
+                if (sessions.length === 0) {
+                    document.getElementById('empty-state').style.display = '';
+                    document.getElementById('data-view').style.display = 'none';
+                    document.getElementById('session-bar').style.display = 'none';
+                    return;
+                }
+
+                const select = document.getElementById('session-select');
+                const valid = sessions.filter(s => s.total_institutions > 0);
+
+                if (valid.length === 0) {
+                    document.getElementById('empty-state').style.display = '';
+                    document.getElementById('data-view').style.display = 'none';
+                    document.getElementById('session-bar').style.display = 'none';
+                    return;
+                }
+
+                select.innerHTML = valid.map(s => {
+                    const dt = new Date(s.started_at);
+                    const label = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()} — ${s.total_institutions} institutions (${s.status})`;
+                    return `<option value="${s.id}">${label}</option>`;
+                }).join('');
+
+                document.getElementById('session-bar').style.display = 'flex';
+
+                // Show the most recent completed session
+                const completed = valid.find(s => s.status === 'completed');
+                if (completed) {
+                    select.value = completed.id;
+                    loadSession(completed.id);
+                } else if (valid.length > 0) {
+                    loadSession(valid[0].id);
+                }
+                maybeShowHistory();
+            } catch (e) {
+                console.error('Failed to load sessions:', e);
+            }
+        }
+
+        async function loadSession(sessionId) {
+            currentSessionId = sessionId;
+            try {
+                const [connRes, statsRes] = await Promise.all([
+                    fetch(`${BASE}/api/sessions/${sessionId}/connections`),
+                    fetch(`${BASE}/api/sessions/${sessionId}/stats`)
+                ]);
+                const connData = await connRes.json();
+                const statsData = await statsRes.json();
+
+                currentConnections = connData.connections || [];
+
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('data-view').style.display = '';
+                document.getElementById('live-stats').classList.add('active');
+
+                renderStats(statsData);
+                renderCharts(statsData);
+                renderTable();
+
+                const dt = new Date(connData.session.started_at);
+                document.getElementById('table-title').textContent =
+                    `Connection Status — Scraped ${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+            } catch (e) {
+                console.error('Failed to load session:', e);
+            }
+        }
+
+        function renderStats(stats) {
+            const cards = document.getElementById('stats-cards');
+            cards.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_institutions}</div>
+                    <div class="stat-label">Total Institutions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Object.keys(stats.provider_distribution || {}).length}</div>
+                    <div class="stat-label">Data Providers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.status_distribution?.['OK'] || 0}</div>
+                    <div class="stat-label">Healthy Connections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.status_distribution?.['Issues reported'] || 0}</div>
+                    <div class="stat-label">Issues Reported</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.status_distribution?.['Unavailable'] || 0}</div>
+                    <div class="stat-label">Unavailable</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.avg_success_pct != null ? stats.avg_success_pct.toFixed(2) + '%' : 'N/A'}</div>
+                    <div class="stat-label">Avg Success Rate</div>
+                </div>
+            `;
+        }
+
+        function renderCharts(stats) {
+            const section = document.getElementById('charts-section');
+            const provColors = {
+                'Plaid': '#7c8cf8', 'Finicity': '#48d4a0', 'MX': '#e6a867',
+                'Unknown': '#666'
+            };
+            const statusColors = {
+                'OK': '#00b894', 'Issues reported': '#fdcb6e', 'Unavailable': '#e17055'
+            };
+
+            const total = stats.total_institutions || 1;
+
+            let provBars = '';
+            for (const [prov, count] of Object.entries(stats.provider_distribution || {})) {
+                const pct = ((count / total) * 100).toFixed(1);
+                const color = provColors[prov] || '#666';
+                provBars += `
+                    <div class="bar-chart-row">
+                        <div class="bar-chart-label" title="${esc(prov)}">${esc(prov)}</div>
+                        <div class="bar-chart-bar-wrapper">
+                            <div class="bar-chart-bar">
+                                <div class="bar-chart-fill" style="width: ${pct}%; background: ${color};"></div>
+                            </div>
+                            <div class="bar-chart-value">${count} (${pct}%)</div>
+                        </div>
+                    </div>`;
+            }
+
+            let statusBars = '';
+            for (const [st, count] of Object.entries(stats.status_distribution || {})) {
+                const pct = ((count / total) * 100).toFixed(1);
+                const color = statusColors[st] || '#666';
+                statusBars += `
+                    <div class="bar-chart-row">
+                        <div class="bar-chart-label" title="${esc(st)}">${esc(st)}</div>
+                        <div class="bar-chart-bar-wrapper">
+                            <div class="bar-chart-bar">
+                                <div class="bar-chart-fill" style="width: ${pct}%; background: ${color};"></div>
+                            </div>
+                            <div class="bar-chart-value">${count} (${pct}%)</div>
+                        </div>
+                    </div>`;
+            }
+
+            // Provider weighted scores chart
+            const scores = stats.provider_scores || {};
+            let scoreBars = '';
+            // Sort providers by weighted average descending
+            const sortedProvs = Object.entries(scores).sort((a, b) => (b[1].weighted_avg || 0) - (a[1].weighted_avg || 0));
+            for (const [prov, sc] of sortedProvs) {
+                const wavg = sc.weighted_avg;
+                const color = provColors[prov] || '#666';
+                const barW = wavg != null ? wavg : 0;
+                const avgS = sc.avg_success != null ? sc.avg_success.toFixed(2) + '%' : 'N/A';
+                const avgL = sc.avg_longevity != null ? sc.avg_longevity.toFixed(2) + '%' : 'N/A';
+                const avgU = sc.avg_update != null ? sc.avg_update.toFixed(2) + '%' : 'N/A';
+                const wavgStr = wavg != null ? wavg.toFixed(2) + '%' : 'N/A';
+                const instCount = sc.institution_count || 0;
+                const sCount = sc.success_count || 0;
+                const lCount = sc.longevity_count || 0;
+                const uCount = sc.update_count || 0;
+                scoreBars += `
+                    <div class="bar-chart-row score-row">
+                        <div class="bar-chart-label" title="${esc(prov)}">${esc(prov)}</div>
+                        <div class="bar-chart-bar-wrapper">
+                            <div class="bar-chart-bar">
+                                <div class="bar-chart-fill" style="width: ${barW}%; background: ${color};"></div>
+                            </div>
+                            <div class="bar-chart-value">${wavgStr}</div>
+                        </div>
+                        <div class="score-tooltip">
+                            <div class="score-tooltip-header">${esc(prov)} — ${instCount} institutions</div>
+                            <table class="score-tooltip-table">
+                                <tr><th>Metric</th><th>Avg</th><th>Weight</th><th>Scored On</th></tr>
+                                <tr><td>Success</td><td>${avgS}</td><td>${(sc.weights.success * 100).toFixed(0)}%</td><td>${sCount} inst.</td></tr>
+                                <tr><td>Longevity</td><td>${avgL}</td><td>${(sc.weights.longevity * 100).toFixed(0)}%</td><td>${lCount} inst.</td></tr>
+                                <tr><td>Updates</td><td>${avgU}</td><td>${(sc.weights.update * 100).toFixed(0)}%</td><td>${uCount} inst.</td></tr>
+                            </table>
+                            <div class="score-tooltip-result">Weighted Avg: <strong>${wavgStr}</strong></div>
+                        </div>
+                    </div>`;
+            }
+
+            section.innerHTML = `
+                <div class="chart-card">
+                    <h3>Provider Weighted Score</h3>
+                    <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:12px;">Weights: Success 40% · Longevity 30% · Updates 30%</div>
+                    ${scoreBars}
+                </div>
+                <div class="chart-card">
+                    <h3>Provider Distribution</h3>
+                    ${provBars}
+                </div>
+                <div class="chart-card">
+                    <h3>Connection Status</h3>
+                    ${statusBars}
+                </div>
+            `;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('connections-tbody');
+            const sorted = [...currentConnections].sort((a, b) => {
+                let va = a[sortField], vb = b[sortField];
+                if (va == null) va = sortAsc ? Infinity : -Infinity;
+                if (vb == null) vb = sortAsc ? Infinity : -Infinity;
+                if (typeof va === 'string') {
+                    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+                }
+                return sortAsc ? va - vb : vb - va;
+            });
+
+            tbody.innerHTML = sorted.map(c => `
+                <tr>
+                    <td class="rank">${c.rank}</td>
+                    <td class="inst-name">${esc(c.institution_name)}</td>
+                    <td>${providerBadge(c.data_provider)}</td>
+                    <td>${metricCell(c.success_pct)}</td>
+                    <td>${metricCell(c.longevity_pct)}</td>
+                    <td>${metricCell(c.update_pct)}</td>
+                    <td>${statusBadge(c.connection_status)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function sortTable(field) {
+            if (sortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                sortField = field;
+                sortAsc = true;
+            }
+            renderTable();
+        }
+
+        function filterTable(query) {
+            const q = query.toLowerCase();
+            const rows = document.querySelectorAll('#connections-tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        function providerBadge(prov) {
+            if (!prov) return '<span class="provider-badge unknown">—</span>';
+            const cls = prov.toLowerCase().replace(/[^a-z]/g, '');
+            return `<span class="provider-badge ${cls}">${esc(prov)}</span>`;
+        }
+
+        function statusBadge(status) {
+            if (!status || status === 'OK') return '<span class="status-badge ok">OK</span>';
+            if (status === 'Issues reported') return '<span class="status-badge issues">Issues</span>';
+            if (status === 'Unavailable') return '<span class="status-badge unavailable">Down</span>';
+            return `<span class="status-badge">${esc(status)}</span>`;
+        }
+
+        function fmtPct(v) {
+            return v != null ? Number(v).toFixed(2) : null;
+        }
+
+        function metricCell(pct) {
+            if (pct == null) return '<span class="metric-text">—</span>';
+            const cls = pct >= 75 ? 'high' : pct >= 50 ? 'medium' : 'low';
+            return `<span class="mini-bar"><span class="mini-bar-fill ${cls}" style="width:${pct}%"></span></span>
+                    <span class="metric-text">${fmtPct(pct)}%</span>`;
+        }
+
+        function esc(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // --- Scraping ---
+
+        let scrapeInProgress = false;
+
+        function pollForCompletion(sessionId, onComplete, btn) {
+            const poll = setInterval(async () => {
+                try {
+                    const r = await fetch(`${BASE}/api/sessions/${sessionId}`);
+                    const s = await r.json();
+                    if (s.status === 'completed') {
+                        clearInterval(poll);
+                        onComplete();
+                    } else if (s.status === 'failed') {
+                        clearInterval(poll);
+                        scrapeInProgress = false;
+                        btn.disabled = false;
+                        btn.textContent = '↻ Scrape Now';
+                        addLog('Scrape failed: ' + (s.error_message || 'unknown error'));
+                    }
+                    // else still running — keep polling
+                } catch (e) {
+                    // network error, keep polling
+                }
+            }, 5000);
+        }
+
+        async function startScrape() {
+            if (scrapeInProgress) return;
+            scrapeInProgress = true;
+
+            const btn = document.getElementById('scrape-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Scraping...';
+
+            const panel = document.getElementById('progress-panel');
+            panel.classList.add('active');
+            document.getElementById('progress-log').innerHTML = '';
+            document.getElementById('progress-bar').className = 'progress-bar indeterminate';
+            document.getElementById('progress-bar').style.width = '30%';
+            document.getElementById('progress-pct').textContent = '';
+            document.getElementById('progress-title').textContent = 'Scraping in progress...';
+
+            // Clear live stats during scrape
+            document.getElementById('live-stats').classList.remove('active');
+
+            try {
+                const res = await fetch(BASE + '/api/scrape', { method: 'POST' });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Already a scrape in progress (409) or other error
+                    scrapeInProgress = false;
+                    btn.disabled = false;
+                    btn.textContent = '↻ Scrape Now';
+                    addLog(data.error || 'Failed to start scrape');
+                    panel.classList.remove('active');
+                    return;
+                }
+
+                const { session_id } = data;
+
+                // Connect to SSE for progress
+                const evtSource = new EventSource(`${BASE}/api/scrape/${session_id}/progress`);
+                let scrapeFinished = false;
+
+                function handleScrapeComplete() {
+                    if (scrapeFinished) return;
+                    scrapeFinished = true;
+                    scrapeInProgress = false;
+                    evtSource.close();
+                    finishScrape(session_id);
+                }
+
+                evtSource.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+
+                    // Reset error counter on any successful message
+                    if (evtSource._errCount) evtSource._errCount = 0;
+
+                    if (msg.event === 'done') {
+                        handleScrapeComplete();
+                        return;
+                    }
+
+                    if (msg.event === 'keepalive') return;
+
+                    const data = msg.data || {};
+                    const bar = document.getElementById('progress-bar');
+                    const pctEl = document.getElementById('progress-pct');
+                    const titleEl = document.getElementById('progress-title');
+
+                    if (msg.event === 'progress') {
+                        if (data.phase === 'scrolling') {
+                            bar.className = 'progress-bar indeterminate';
+                            bar.style.width = '30%';
+                            pctEl.textContent = `${data.count || 0} institutions found`;
+                            titleEl.textContent = 'Loading institutions...';
+                        } else if (data.phase === 'extracting') {
+                            bar.className = 'progress-bar indeterminate';
+                            bar.style.width = '60%';
+                            pctEl.textContent = `${data.count || 0} institutions extracted`;
+                            titleEl.textContent = 'Extracting metrics...';
+                        } else if (data.phase === 'saving' && data.current && data.total) {
+                            const pct = Math.round((data.current / data.total) * 100);
+                            bar.className = 'progress-bar';
+                            bar.style.width = pct + '%';
+                            pctEl.textContent = `${data.current} / ${data.total} (${pct}%)`;
+                            titleEl.textContent = 'Saving to database...';
+                        } else if (data.current && data.total) {
+                            const pct = Math.round((data.current / data.total) * 100);
+                            bar.className = 'progress-bar';
+                            bar.style.width = pct + '%';
+                            pctEl.textContent = pct + '%';
+                        }
+                    }
+
+                    addLog(data.message || JSON.stringify(data));
+
+                    if (msg.event === 'complete') {
+                        handleScrapeComplete();
+                    }
+
+                    if (msg.event === 'error') {
+                        evtSource.close();
+                        scrapeInProgress = false;
+                        titleEl.textContent = 'Scrape failed!';
+                        titleEl.style.color = 'var(--red)';
+                        btn.disabled = false;
+                        btn.textContent = '↻ Scrape Now';
+                    }
+                };
+
+                evtSource.onerror = () => {
+                    if (scrapeFinished) {
+                        evtSource.close();
+                        return;
+                    }
+                    // Don't close immediately — let the browser auto-reconnect.
+                    // Track consecutive errors; only give up after several.
+                    if (!evtSource._errCount) evtSource._errCount = 0;
+                    evtSource._errCount++;
+
+                    if (evtSource._errCount < 5) {
+                        // Let EventSource auto-reconnect
+                        addLog(`Connection hiccup (${evtSource._errCount}/5), retrying...`);
+                        return;
+                    }
+
+                    // Too many consecutive errors — close SSE and poll for completion
+                    evtSource.close();
+                    addLog('SSE connection lost. Polling for completion...');
+                    pollForCompletion(session_id, handleScrapeComplete, btn);
+                };
+
+            } catch (e) {
+                console.error('Scrape failed:', e);
+                scrapeInProgress = false;
+                btn.disabled = false;
+                btn.textContent = '↻ Scrape Now';
+                addLog('Error: ' + e.message);
+            }
+        }
+
+        function finishScrape(sessionId) {
+            const bar = document.getElementById('progress-bar');
+            bar.className = 'progress-bar';
+            bar.style.width = '100%';
+            document.getElementById('progress-pct').textContent = '100%';
+            document.getElementById('progress-title').textContent = 'Scrape complete!';
+            document.getElementById('progress-title').style.color = 'var(--green)';
+
+            const btn = document.getElementById('scrape-btn');
+            btn.disabled = false;
+            btn.textContent = '↻ Scrape Now';
+
+            // Load the specific completed session directly
+            setTimeout(() => {
+                // Update session dropdown
+                fetch(BASE + '/api/sessions').then(r => r.json()).then(sessions => {
+                    const valid = sessions.filter(s => s.total_institutions > 0);
+                    const select = document.getElementById('session-select');
+                    select.innerHTML = valid.map(s => {
+                        const dt = new Date(s.started_at);
+                        const label = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()} — ${s.total_institutions} institutions (${s.status})`;
+                        return `<option value="${s.id}">${label}</option>`;
+                    }).join('');
+                    document.getElementById('session-bar').style.display = 'flex';
+                    select.value = sessionId;
+                });
+                // Load the session that just completed
+                loadSession(sessionId);
+                // Refresh history and chart
+                maybeShowHistory();
+                if (historyLoaded) loadHistory();
+                loadPerfChart();
+                // Fade out progress panel after a few seconds
+                setTimeout(() => {
+                    document.getElementById('progress-panel').classList.remove('active');
+                    document.getElementById('progress-title').style.color = '';
+                }, 4000);
+            }, 500);
+        }
+
+        function addLog(message) {
+            const log = document.getElementById('progress-log');
+            const now = new Date();
+            const ts = now.toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="timestamp">[${ts}]</span> ${esc(message)}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // --- History Section ---
+
+        let historyOpen = false;
+        let historyLoaded = false;
+
+        function toggleHistory() {
+            historyOpen = !historyOpen;
+            document.getElementById('history-body').classList.toggle('open', historyOpen);
+            document.getElementById('history-chevron').classList.toggle('open', historyOpen);
+            if (historyOpen && !historyLoaded) loadHistory();
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch(BASE + '/api/history');
+                const runs = await res.json();
+                renderHistory(runs);
+                historyLoaded = true;
+            } catch (e) {
+                console.error('Failed to load history:', e);
+            }
+        }
+
+        function metricColor(val) {
+            if (val == null) return 'dim';
+            if (val >= 75) return 'green';
+            if (val >= 50) return 'yellow';
+            return 'red';
+        }
+
+        function fmtMetric(val) {
+            if (val == null) return '—';
+            return val.toFixed(1) + '%';
+        }
+
+        function deltaSpan(current, previous) {
+            if (current == null || previous == null) return '';
+            const diff = current - previous;
+            if (Math.abs(diff) < 0.05) return '<span class="history-delta flat">—</span>';
+            const arrow = diff > 0 ? '&#x25B2;' : '&#x25BC;';
+            const cls = diff > 0 ? 'up' : 'down';
+            return `<span class="history-delta ${cls}">${arrow}${Math.abs(diff).toFixed(1)}</span>`;
+        }
+
+        function renderHistory(runs) {
+            const container = document.getElementById('history-scroll');
+            if (!runs || runs.length === 0) {
+                container.innerHTML = '<div style="padding:20px;color:var(--text-dim);text-align:center;">No completed scrapes yet.</div>';
+                return;
+            }
+
+            const provOrder = ['Plaid', 'Finicity', 'MX'];
+            let html = '';
+
+            runs.forEach((run, i) => {
+                const prevRun = i < runs.length - 1 ? runs[i + 1] : null;
+                const dt = new Date(run.started_at);
+                const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                let provCards = '';
+                const provs = Object.keys(run.providers).sort((a, b) => {
+                    const ai = provOrder.indexOf(a), bi = provOrder.indexOf(b);
+                    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+                });
+
+                for (const prov of provs) {
+                    const p = run.providers[prov];
+                    const prev = prevRun?.providers?.[prov];
+                    const cls = prov.toLowerCase().replace(/[^a-z]/g, '');
+
+                    provCards += `
+                        <div class="history-prov-card">
+                            <div class="history-prov-name ${cls}">${esc(prov)} <span style="font-weight:400;color:var(--text-dim);font-size:0.75rem;">(${p.count})</span></div>
+                            <div class="history-metrics">
+                                <div class="history-metric-label">Success</div>
+                                <div class="history-metric-label">Longevity</div>
+                                <div class="history-metric-label">Updates</div>
+                                <div class="history-metric-label">Weighted</div>
+                                <div class="history-metric-val ${metricColor(p.success)}">${fmtMetric(p.success)} ${deltaSpan(p.success, prev?.success)}</div>
+                                <div class="history-metric-val ${metricColor(p.longevity)}">${fmtMetric(p.longevity)} ${deltaSpan(p.longevity, prev?.longevity)}</div>
+                                <div class="history-metric-val ${metricColor(p.update)}">${fmtMetric(p.update)} ${deltaSpan(p.update, prev?.update)}</div>
+                                <div class="history-metric-val ${metricColor(p.weighted)}">${fmtMetric(p.weighted)} ${deltaSpan(p.weighted, prev?.weighted)}</div>
+                            </div>
+                        </div>`;
+                }
+
+                html += `
+                    <div class="history-run">
+                        <div class="history-run-header">
+                            <span class="history-run-date">${dateStr} ${timeStr}</span>
+                            <span class="history-run-meta">${run.total_institutions} institutions · Session #${run.session_id}</span>
+                        </div>
+                        <div class="history-providers">${provCards}</div>
+                    </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Show history section when sessions exist
+        function maybeShowHistory() {
+            document.getElementById('history-section').style.display = '';
+        }
+
+        // --- Performance Chart ---
+
+        let perfChart = null;
+        let perfChartData = null;
+        let currentChartMetric = 'weighted';
+
+        async function loadPerfChart() {
+            try {
+                const res = await fetch(BASE + '/api/history');
+                const runs = await res.json();
+                if (!runs || runs.length === 0) {
+                    document.getElementById('perf-chart-section').style.display = 'none';
+                    return;
+                }
+                perfChartData = runs;
+                document.getElementById('perf-chart-section').style.display = '';
+                renderPerfChart(currentChartMetric);
+            } catch (e) {
+                console.error('Failed to load perf chart:', e);
+            }
+        }
+
+        function switchChartMetric(metric) {
+            currentChartMetric = metric;
+            document.querySelectorAll('.chart-metric-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.metric === metric);
+            });
+            renderPerfChart(metric);
+        }
+
+        function renderPerfChart(metric) {
+            if (!perfChartData) return;
+
+            const provColors = {
+                'Plaid':    { line: '#7c8cf8', bg: 'rgba(124,140,248,0.1)' },
+                'Finicity': { line: '#48d4a0', bg: 'rgba(72,212,160,0.1)' },
+                'MX':       { line: '#e6a867', bg: 'rgba(230,168,103,0.1)' },
+            };
+            const provOrder = ['Plaid', 'Finicity', 'MX'];
+
+            // Runs are newest-first; reverse for chronological order
+            const runs = [...perfChartData].reverse();
+
+            // Collect all providers seen
+            const allProvs = new Set();
+            runs.forEach(r => Object.keys(r.providers).forEach(p => allProvs.add(p)));
+            const provs = provOrder.filter(p => allProvs.has(p));
+            // Add any extra providers not in the standard list
+            allProvs.forEach(p => { if (!provs.includes(p)) provs.push(p); });
+
+            const labels = runs.map(r => r.started_at);
+
+            const metricLabels = {
+                weighted: 'Weighted Score',
+                success: 'Success Rate',
+                longevity: 'Longevity',
+                update: 'Update Frequency',
+            };
+
+            const datasets = provs.map(prov => {
+                const colors = provColors[prov] || { line: '#888', bg: 'rgba(136,136,136,0.1)' };
+                return {
+                    label: prov,
+                    data: runs.map(r => {
+                        const p = r.providers[prov];
+                        return p ? p[metric] : null;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: colors.line,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true,
+                };
+            });
+
+            const ctx = document.getElementById('perf-chart').getContext('2d');
+
+            if (perfChart) perfChart.destroy();
+
+            perfChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: {
+                                    hour: 'MMM d, ha',
+                                    day: 'MMM d',
+                                    week: 'MMM d',
+                                    month: 'MMM yyyy',
+                                },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: {
+                                color: '#8b8fa3',
+                                callback: v => v + '%',
+                            },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] || metric,
+                                color: '#8b8fa3',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load chart on page init
+        loadPerfChart();
+    </script>
+</body>
+</html>

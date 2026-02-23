@@ -1,0 +1,16 @@
+deploy.sh
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Flask instance folder (contains SQLite DB)
+instance/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
