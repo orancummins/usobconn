@@ -22,6 +22,7 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+MIN_SESSION_FIS = 5000  # Ignore sessions with fewer than this many institutions
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monarch.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
@@ -223,7 +224,7 @@ def list_sessions():
     """List all scrape sessions with at least 1 institution."""
     sessions = (
         ScrapeSession.query
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .order_by(ScrapeSession.started_at.desc())
         .all()
     )
@@ -398,7 +399,7 @@ def get_history():
 
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .order_by(ScrapeSession.started_at.desc())
         .all()
     )
@@ -494,7 +495,7 @@ def get_score_changes():
 
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .order_by(ScrapeSession.started_at.asc())
         .all()
     )
@@ -623,7 +624,7 @@ def get_institution_history(name):
     """Return metric history for a specific institution across all completed scrapes."""
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .order_by(ScrapeSession.started_at.asc())
         .all()
     )
@@ -663,7 +664,7 @@ def get_provider_changes(session_id):
     prev = (
         ScrapeSession.query
         .filter(ScrapeSession.status == "completed")
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .filter(ScrapeSession.started_at < current.started_at)
         .order_by(ScrapeSession.started_at.desc())
         .first()
@@ -724,7 +725,7 @@ def range_diff():
 
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
-        .filter(ScrapeSession.total_institutions > 0)
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
         .filter(ScrapeSession.id >= from_id)
         .order_by(ScrapeSession.started_at.asc())
         .all()

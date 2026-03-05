@@ -254,6 +254,7 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.03em;
+            white-space: nowrap;
         }
         .issues-modal-table td {
             padding: 8px 10px;
@@ -1932,7 +1933,7 @@
                 }
 
                 const select = document.getElementById('session-select');
-                const valid = sessions.filter(s => s.total_institutions > 0);
+                const valid = sessions.filter(s => s.total_institutions >= 5000);
 
                 if (valid.length === 0) {
                     document.getElementById('empty-state').style.display = '';
@@ -2228,7 +2229,7 @@
         let pmapAnimationAbort = false;
 
         function populatePixelMapSessions(sessions) {
-            pmapSessions = sessions.filter(s => s.total_institutions > 0 && s.status === 'completed');
+            pmapSessions = sessions.filter(s => s.total_institutions >= 5000 && s.status === 'completed');
             const fromSel = document.getElementById('pmap-from-select');
             const toSel = document.getElementById('pmap-to-select');
             const opts = pmapSessions.map(s => {
@@ -4095,7 +4096,7 @@
             setTimeout(() => {
                 // Update session dropdown
                 fetch(BASE + '/api/sessions').then(r => r.json()).then(sessions => {
-                    const valid = sessions.filter(s => s.total_institutions > 0);
+                    const valid = sessions.filter(s => s.total_institutions >= 5000);
                     const select = document.getElementById('session-select');
                     select.innerHTML = valid.map(s => {
                         const dt = new Date(s.started_at);
