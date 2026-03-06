@@ -17,7 +17,11 @@ from sqlalchemy.exc import OperationalError
 
 from models import Connection, ScrapeSession, db
 from scheduler import start_scheduler
-from json_fetcher import fetch_json_connections, refresh_logo_cache
+from json_fetcher import (
+    fetch_json_connections,
+    refresh_logo_cache,
+    refresh_logo_for_institution,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,6 +60,9 @@ app.wsgi_app = ReverseProxyMiddleware(app.wsgi_app)
 # Password gate — set APP_PASSWORD env var to enable.
 # If unset the app runs without auth (local-only use).
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+LOGO_REFRESH_MAX_AGE_DAYS = int(os.environ.get("LOGO_REFRESH_MAX_AGE_DAYS", "7"))
+_logo_refresh_lock = threading.Lock()
+_logo_refresh_inflight: set[str] = set()
 
 db.init_app(app)
 
@@ -518,9 +525,43 @@ def get_logo(name):
     import hashlib
     logo_hash = hashlib.md5(name.encode()).hexdigest()
     logo_path = os.path.join(app.instance_path, "logos", f"{logo_hash}.png")
+
+    def _queue_logo_refresh(force: bool):
+        key = name.strip().lower()
+        if not key:
+            return
+        with _logo_refresh_lock:
+            if key in _logo_refresh_inflight:
+                return
+            _logo_refresh_inflight.add(key)
+
+        def _run():
+            try:
+                refresh_logo_for_institution(app, name, force=force)
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Background logo refresh failed for %s", name
+                )
+            finally:
+                with _logo_refresh_lock:
+                    _logo_refresh_inflight.discard(key)
+
+        threading.Thread(
+            target=_run, daemon=True, name=f"logo-refresh-{logo_hash[:8]}"
+        ).start()
+
     if os.path.exists(logo_path):
+        try:
+            age_seconds = time.time() - os.path.getmtime(logo_path)
+            max_age_seconds = LOGO_REFRESH_MAX_AGE_DAYS * 86400
+            if age_seconds > max_age_seconds:
+                _queue_logo_refresh(force=True)
+        except OSError:
+            _queue_logo_refresh(force=True)
         return send_file(logo_path, mimetype="image/png",
                          max_age=86400)  # cache 24 hours
+
+    _queue_logo_refresh(force=False)
     return "", 404
 
 

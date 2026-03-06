@@ -83,6 +83,11 @@ BATCH_SIZE=2000 SQLITE_PATH=/app/instance/monarch.db ./scripts/import_sqlite_fro
 
 ## Logo Cache Refresh (separate from scrape save)
 
+Automatic behavior:
+- If a logo is missing, `/api/logo/<name>` queues a background refresh.
+- If a logo file is older than 7 days, `/api/logo/<name>` serves the cached file and queues a background refresh.
+- Stale threshold is configurable with `LOGO_REFRESH_MAX_AGE_DAYS` (default `7`).
+
 Refresh logo files without re-running database import/scrape:
 
 ```bash

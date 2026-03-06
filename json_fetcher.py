@@ -106,14 +106,14 @@ def _fetch_all_institutions(ctx, emit=None):
     return all_items
 
 
-def _save_logo_to_disk(logo_dir, institution_name, logo_data, ctx=None):
+def _save_logo_to_disk(logo_dir, institution_name, logo_data, ctx=None, force=False):
     """Persist a logo for an institution if possible."""
     if not logo_data or not isinstance(logo_data, str):
         return False
 
     logo_hash = hashlib.md5(institution_name.encode()).hexdigest()
     logo_path = os.path.join(logo_dir, f"{logo_hash}.png")
-    if os.path.exists(logo_path):
+    if (not force) and os.path.exists(logo_path):
         return False
 
     try:
@@ -136,6 +136,47 @@ def _save_logo_to_disk(logo_dir, institution_name, logo_data, ctx=None):
         return True
     except Exception:
         return False
+
+
+def refresh_logo_for_institution(app, institution_name, force=False):
+    """Refresh a single institution logo from ISS API."""
+    target = (institution_name or "").strip().lower()
+    if not target:
+        return {"found": False, "saved": False}
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    offset = 0
+    while True:
+        url = f"{ISS_URL}?offset={offset}"
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "MonarchScraper/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        items = data.get("items", [])
+        for item in items:
+            name = (item.get("name") or "").strip()
+            if name.lower() != target:
+                continue
+            logo_data = item.get("logo")
+            with app.app_context():
+                logo_dir = os.path.join(app.instance_path, "logos")
+                os.makedirs(logo_dir, exist_ok=True)
+                saved = _save_logo_to_disk(
+                    logo_dir, institution_name, logo_data, ctx=ctx, force=force
+                )
+                return {"found": True, "saved": saved}
+
+        next_offset = data.get("next_offset")
+        if not next_offset or len(items) == 0:
+            break
+        offset = next_offset
+
+    return {"found": False, "saved": False}
 
 
 def fetch_json_connections(app, progress_callback=None, session_id=None):
