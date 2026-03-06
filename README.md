@@ -37,8 +37,8 @@ flowchart TD
     F --> G[Fetch institution data from ISS API]
     G --> H[Bulk insert to PostgreSQL in batches]
     H --> I[Commit session and rows]
-    I --> J[Light logo cache step\n(base64/data-image only)]
-    J --> K[UI reads logos from /api/logo/*\nserved from instance/logos]
+    I --> J["Light logo cache step<br/>(base64/data-image only)"]
+    J --> K["UI reads logos from /api/logo/*<br/>served from instance/logos"]
 
     E --> L[Optional: Separate logo refresh]
     L --> M[refresh_logos_cache.py or POST /api/logos/refresh]
