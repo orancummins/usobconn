@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_NAME:-usobconn}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-change-me}
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      DATABASE_URL: postgresql+psycopg://${DB_USER:-usobconn}:${DB_PASSWORD:-usobconn}@postgres:${DB_PORT:-5432}/${DB_NAME:-usobconn}
+    ports:
+      - "${HOST_PORT:-9093}:9093"
+    volumes:
+      - ./instance:/app/instance
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: ${DB_CONTAINER_NAME:-usobconn-postgres}
+    environment:
+      POSTGRES_DB: ${DB_NAME:-usobconn}
+      POSTGRES_USER: ${DB_USER:-usobconn}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-usobconn}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-usobconn} -d ${DB_NAME:-usobconn}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
