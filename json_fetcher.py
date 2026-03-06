@@ -218,9 +218,17 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                         try:
                             if logo_data.startswith("data:image"):
                                 _, b64data = logo_data.split(",", 1)
+                                raw = base64.b64decode(b64data)
+                            elif logo_data.startswith(("http://", "https://")):
+                                req = urllib.request.Request(
+                                    logo_data,
+                                    headers={"User-Agent": "MonarchScraper/1.0"},
+                                )
+                                with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+                                    raw = resp.read()
                             else:
                                 b64data = logo_data
-                            raw = base64.b64decode(b64data)
+                                raw = base64.b64decode(b64data)
                             if len(raw) > 100:
                                 with open(logo_path, "wb") as lf:
                                     lf.write(raw)
