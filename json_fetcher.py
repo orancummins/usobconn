@@ -17,6 +17,8 @@ import logging
 import os
 import ssl
 import urllib.request
+import base64
+import hashlib
 from datetime import datetime, timezone
 
 from models import Connection, ScrapeSession, db
@@ -57,6 +59,85 @@ def _capitalize_provider(name):
     return name.capitalize()
 
 
+def _fetch_all_institutions(ctx, emit=None):
+    """Fetch all institution items from the ISS API."""
+    all_items = []
+    offset = 0
+    while True:
+        url = f"{ISS_URL}?offset={offset}"
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "MonarchScraper/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        items = data.get("items", [])
+        next_offset = data.get("next_offset")
+        all_items.extend(items)
+
+        if emit:
+            fi_batch = []
+            for it in items:
+                fi_batch.append(
+                    {
+                        "name": it.get("name", "Unknown"),
+                        "prov": _capitalize_provider(
+                            it.get("preferred_data_provider")
+                        ),
+                        "logo": it.get("logo")
+                        if isinstance(it.get("logo"), str)
+                        and it["logo"].startswith("data:image")
+                        else None,
+                    }
+                )
+            emit(
+                "progress",
+                {
+                    "message": f"Fetched {len(all_items)} institutions...",
+                    "phase": "scrolling",
+                    "count": len(all_items),
+                    "fi_batch": fi_batch,
+                },
+            )
+
+        if not next_offset or len(items) == 0:
+            break
+        offset = next_offset
+    return all_items
+
+
+def _save_logo_to_disk(logo_dir, institution_name, logo_data, ctx=None):
+    """Persist a logo for an institution if possible."""
+    if not logo_data or not isinstance(logo_data, str):
+        return False
+
+    logo_hash = hashlib.md5(institution_name.encode()).hexdigest()
+    logo_path = os.path.join(logo_dir, f"{logo_hash}.png")
+    if os.path.exists(logo_path):
+        return False
+
+    try:
+        if logo_data.startswith("data:image"):
+            _, b64data = logo_data.split(",", 1)
+            raw = base64.b64decode(b64data)
+        elif logo_data.startswith(("http://", "https://")):
+            req = urllib.request.Request(
+                logo_data, headers={"User-Agent": "MonarchScraper/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+                raw = resp.read()
+        else:
+            b64data = logo_data
+            raw = base64.b64decode(b64data)
+        if len(raw) <= 100:
+            return False
+        with open(logo_path, "wb") as lf:
+            lf.write(raw)
+        return True
+    except Exception:
+        return False
+
+
 def fetch_json_connections(app, progress_callback=None, session_id=None):
     """Fetch all institutions from Monarch ISS API and save to database.
 
@@ -85,43 +166,7 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
 
     try:
         # ── Phase 1: Fetch all pages ──────────────────────────────
-        all_items = []
-        offset = 0
-
-        while True:
-            url = f"{ISS_URL}?offset={offset}"
-            req = urllib.request.Request(
-                url, headers={"User-Agent": "MonarchScraper/1.0"}
-            )
-            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-
-            items = data.get("items", [])
-            next_offset = data.get("next_offset")
-            all_items.extend(items)
-
-            # Build compact FI summaries for the live-feed panel
-            fi_batch = []
-            for it in items:
-                fi_batch.append({
-                    "name": it.get("name", "Unknown"),
-                    "prov": _capitalize_provider(it.get("preferred_data_provider")),
-                    "logo": it.get("logo") if isinstance(it.get("logo"), str) and it["logo"].startswith("data:image") else None,
-                })
-
-            emit(
-                "progress",
-                {
-                    "message": f"Fetched {len(all_items)} institutions...",
-                    "phase": "scrolling",       # reuse existing phase name
-                    "count": len(all_items),
-                    "fi_batch": fi_batch,
-                },
-            )
-
-            if not next_offset or len(items) == 0:
-                break
-            offset = next_offset
+        all_items = _fetch_all_institutions(ctx, emit=emit)
 
         total = len(all_items)
         emit(
@@ -141,6 +186,14 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
             session.status = "running"
             session.total_institutions = total
             db.session.commit()
+
+            logo_dir = os.path.join(app.instance_path, "logos")
+            os.makedirs(logo_dir, exist_ok=True)
+
+            batch_size = 2000
+            pending_rows = []
+            pending_logos = []
+            insert_stmt = Connection.__table__.insert()
 
             for idx, item in enumerate(all_items):
                 pref_prov = _capitalize_provider(
@@ -205,51 +258,30 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                     key=lambda pd: 0 if pd["name"] == pref_prov else 1
                 )
 
-                # Save logo to disk (instance/logos/<hash>.png) — skip if cached
                 logo_data = item.get("logo")
                 if logo_data and isinstance(logo_data, str):
-                    import base64, hashlib
-                    inst_name = item.get("name", "Unknown")
-                    logo_hash = hashlib.md5(inst_name.encode()).hexdigest()
-                    logo_dir = os.path.join(app.instance_path, "logos")
-                    os.makedirs(logo_dir, exist_ok=True)
-                    logo_path = os.path.join(logo_dir, f"{logo_hash}.png")
-                    if not os.path.exists(logo_path):
-                        try:
-                            if logo_data.startswith("data:image"):
-                                _, b64data = logo_data.split(",", 1)
-                                raw = base64.b64decode(b64data)
-                            elif logo_data.startswith(("http://", "https://")):
-                                req = urllib.request.Request(
-                                    logo_data,
-                                    headers={"User-Agent": "MonarchScraper/1.0"},
-                                )
-                                with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
-                                    raw = resp.read()
-                            else:
-                                b64data = logo_data
-                                raw = base64.b64decode(b64data)
-                            if len(raw) > 100:
-                                with open(logo_path, "wb") as lf:
-                                    lf.write(raw)
-                        except Exception:
-                            pass
+                    pending_logos.append((item.get("name", "Unknown"), logo_data))
 
-                conn = Connection(
-                    scrape_session_id=session_id,
-                    rank=item.get("popularity", idx + 1),
-                    institution_name=item.get("name", "Unknown"),
-                    data_provider=pref_prov,
-                    additional_providers=json.dumps(provider_details),
-                    success_pct=success_pct,
-                    success_rate=LEVEL_LABELS.get(success_pct),
-                    longevity_pct=longevity_pct,
-                    longevity=LEVEL_LABELS.get(longevity_pct),
-                    update_pct=update_pct,
-                    update_frequency=LEVEL_LABELS.get(update_pct),
-                    connection_status=status,
+                pending_rows.append(
+                    {
+                        "scrape_session_id": session_id,
+                        "rank": item.get("popularity", idx + 1),
+                        "institution_name": item.get("name", "Unknown"),
+                        "data_provider": pref_prov,
+                        "additional_providers": json.dumps(provider_details),
+                        "success_pct": success_pct,
+                        "success_rate": LEVEL_LABELS.get(success_pct),
+                        "longevity_pct": longevity_pct,
+                        "longevity": LEVEL_LABELS.get(longevity_pct),
+                        "update_pct": update_pct,
+                        "update_frequency": LEVEL_LABELS.get(update_pct),
+                        "connection_status": status,
+                    }
                 )
-                db.session.add(conn)
+
+                if len(pending_rows) >= batch_size:
+                    db.session.execute(insert_stmt, pending_rows)
+                    pending_rows.clear()
 
                 if (idx + 1) % 100 == 0 or idx == total - 1:
                     emit(
@@ -263,9 +295,40 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                         },
                     )
 
+            if pending_rows:
+                db.session.execute(insert_stmt, pending_rows)
+
             session.status = "completed"
             session.finished_at = datetime.now(timezone.utc)
             db.session.commit()
+
+            # Cache logos after DB commit so "saving" phase reflects DB work only.
+            if pending_logos:
+                emit(
+                    "progress",
+                    {
+                        "message": "Database save complete. Caching logos...",
+                        "phase": "logos",
+                        "current": 0,
+                        "total": len(pending_logos),
+                        "count": total,
+                    },
+                )
+                for idx, (inst_name, logo_data) in enumerate(pending_logos, start=1):
+                    # Keep scrape-time caching lightweight: embedded/base64 only.
+                    if not logo_data.startswith(("http://", "https://")):
+                        _save_logo_to_disk(logo_dir, inst_name, logo_data)
+                    if idx % 500 == 0 or idx == len(pending_logos):
+                        emit(
+                            "progress",
+                            {
+                                "message": f"Caching logos {idx} / {len(pending_logos)}",
+                                "phase": "logos",
+                                "current": idx,
+                                "total": len(pending_logos),
+                                "count": total,
+                            },
+                        )
 
         emit(
             "complete",
@@ -288,3 +351,88 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
 
         emit("error", {"message": f"Retrieval failed: {str(e)}"})
         raise
+
+
+def refresh_logo_cache(app, progress_callback=None, force=False):
+    """Refresh cached institution logos independently of DB retrieval.
+
+    Args:
+        app: Flask app.
+        progress_callback: optional callable(event_type, data).
+        force: if True, re-fetch even if logo file already exists.
+    """
+
+    def emit(event_type, data):
+        if progress_callback:
+            progress_callback(event_type, data)
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    emit("status", {"message": "Starting logo refresh..."})
+    all_items = _fetch_all_institutions(ctx)
+    total = len(all_items)
+    emit(
+        "progress",
+        {
+            "message": f"Refreshing logo cache for {total} institutions...",
+            "phase": "logos",
+            "current": 0,
+            "total": total,
+            "count": total,
+        },
+    )
+
+    saved = 0
+    skipped = 0
+    errors = 0
+    with app.app_context():
+        logo_dir = os.path.join(app.instance_path, "logos")
+        os.makedirs(logo_dir, exist_ok=True)
+
+        for idx, item in enumerate(all_items, start=1):
+            name = item.get("name", "Unknown")
+            logo_data = item.get("logo")
+            logo_hash = hashlib.md5(name.encode()).hexdigest()
+            logo_path = os.path.join(logo_dir, f"{logo_hash}.png")
+
+            if (not force) and os.path.exists(logo_path):
+                skipped += 1
+            else:
+                try:
+                    if _save_logo_to_disk(logo_dir, name, logo_data, ctx=ctx):
+                        saved += 1
+                    else:
+                        skipped += 1
+                except Exception:
+                    errors += 1
+
+            if idx % 250 == 0 or idx == total:
+                emit(
+                    "progress",
+                    {
+                        "message": (
+                            f"Logo refresh {idx} / {total} "
+                            f"(saved={saved}, skipped={skipped}, errors={errors})"
+                        ),
+                        "phase": "logos",
+                        "current": idx,
+                        "total": total,
+                        "count": total,
+                    },
+                )
+
+    emit(
+        "complete",
+        {
+            "message": (
+                f"Logo refresh complete: saved={saved}, skipped={skipped}, errors={errors}"
+            ),
+            "total": total,
+            "saved": saved,
+            "skipped": skipped,
+            "errors": errors,
+        },
+    )
+    return {"total": total, "saved": saved, "skipped": skipped, "errors": errors}

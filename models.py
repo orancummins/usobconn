@@ -10,6 +10,11 @@ class ScrapeSession(db.Model):
     """Represents a single scrape run, timestamped for historical tracking."""
 
     __tablename__ = "scrape_sessions"
+    __table_args__ = (
+        db.Index("ix_scrape_sessions_status_started_at", "status", "started_at"),
+        db.Index("ix_scrape_sessions_started_at", "started_at"),
+        db.Index("ix_scrape_sessions_total_institutions", "total_institutions"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     started_at = db.Column(
@@ -41,6 +46,14 @@ class Connection(db.Model):
     """Represents a single financial institution's connection status."""
 
     __tablename__ = "connections"
+    __table_args__ = (
+        db.Index("ix_connections_session_rank", "scrape_session_id", "rank"),
+        db.Index(
+            "ix_connections_session_institution",
+            "scrape_session_id",
+            "institution_name",
+        ),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     scrape_session_id = db.Column(

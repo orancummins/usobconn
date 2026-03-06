@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+CLEAN_DB=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --clean|--wipe-db)
+      CLEAN_DB=true
+      shift
+      ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ./run.sh [--clean]
+
+Options:
+  --clean      Recreate PostgreSQL data volume (destructive, starts with empty DB)
+  --wipe-db    Alias for --clean
+  -h, --help   Show this help
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Use --help for usage." >&2
+      exit 1
+      ;;
+  esac
+done
+
 IMAGE_NAME="${IMAGE_NAME:-usobconn}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 CONTAINER_NAME="${CONTAINER_NAME:-usobconn}"
@@ -22,6 +48,16 @@ mkdir -p instance
 
 if ! docker network inspect "${NETWORK_NAME}" >/dev/null 2>&1; then
   docker network create "${NETWORK_NAME}" >/dev/null
+fi
+
+if [ "${CLEAN_DB}" = "true" ]; then
+  echo "Cleaning PostgreSQL data volume '${DB_VOLUME}'..."
+  if docker ps -a --format '{{.Names}}' | grep -qx "${DB_CONTAINER_NAME}"; then
+    docker rm -f "${DB_CONTAINER_NAME}" >/dev/null
+  fi
+  if docker volume inspect "${DB_VOLUME}" >/dev/null 2>&1; then
+    docker volume rm "${DB_VOLUME}" >/dev/null
+  fi
 fi
 
 if ! docker volume inspect "${DB_VOLUME}" >/dev/null 2>&1; then

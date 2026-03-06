@@ -12,11 +12,12 @@ import ssl
 import urllib.request
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, session, url_for
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from models import Connection, ScrapeSession, db
 from scheduler import start_scheduler
-from json_fetcher import fetch_json_connections
+from json_fetcher import fetch_json_connections, refresh_logo_cache
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,8 +76,27 @@ def _init_db_with_retry(max_attempts=20, delay_seconds=2):
             time.sleep(delay_seconds)
 
 
+def _ensure_postgres_indexes():
+    """Create performance indexes when running on PostgreSQL."""
+    if not app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql"):
+        return
+
+    statements = [
+        "CREATE INDEX IF NOT EXISTS ix_scrape_sessions_status_started_at ON scrape_sessions (status, started_at)",
+        "CREATE INDEX IF NOT EXISTS ix_scrape_sessions_started_at ON scrape_sessions (started_at)",
+        "CREATE INDEX IF NOT EXISTS ix_scrape_sessions_total_institutions ON scrape_sessions (total_institutions)",
+        "CREATE INDEX IF NOT EXISTS ix_connections_session_rank ON connections (scrape_session_id, rank)",
+        "CREATE INDEX IF NOT EXISTS ix_connections_session_institution ON connections (scrape_session_id, institution_name)",
+    ]
+
+    with db.engine.begin() as conn:
+        for stmt in statements:
+            conn.execute(text(stmt))
+
+
 with app.app_context():
     _init_db_with_retry()
+    _ensure_postgres_indexes()
     # Clean up any stale sessions from previous crashes
     stale = ScrapeSession.query.filter(
         ScrapeSession.status.in_(["starting", "running"])
@@ -502,6 +522,19 @@ def get_logo(name):
         return send_file(logo_path, mimetype="image/png",
                          max_age=86400)  # cache 24 hours
     return "", 404
+
+
+@app.route("/api/logos/refresh", methods=["POST"])
+@login_required
+def refresh_logos():
+    """Refresh cached logos from the ISS API."""
+    force = bool((request.get_json(silent=True) or {}).get("force", False))
+    try:
+        result = refresh_logo_cache(app, force=force)
+        return jsonify({"ok": True, **result})
+    except Exception as e:
+        logging.getLogger(__name__).exception("Logo refresh failed")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.route("/api/score-changes")
