@@ -6,11 +6,13 @@ import logging
 import os
 import queue
 import secrets
+import time
 import threading
 import ssl
 import urllib.request
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, session, url_for
+from sqlalchemy.exc import OperationalError
 
 from models import Connection, ScrapeSession, db
 from scheduler import start_scheduler
@@ -23,7 +25,10 @@ logging.basicConfig(
 
 app = Flask(__name__)
 MIN_SESSION_FIS = 5000  # Ignore sessions with fewer than this many institutions
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monarch.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+psycopg://usobconn:usobconn@localhost:5432/usobconn",
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
@@ -53,8 +58,25 @@ APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 
 db.init_app(app)
 
+def _init_db_with_retry(max_attempts=20, delay_seconds=2):
+    for attempt in range(1, max_attempts + 1):
+        try:
+            db.create_all()
+            return
+        except OperationalError:
+            if attempt == max_attempts:
+                raise
+            logging.getLogger(__name__).warning(
+                "Database not ready (attempt %d/%d), retrying in %ds",
+                attempt,
+                max_attempts,
+                delay_seconds,
+            )
+            time.sleep(delay_seconds)
+
+
 with app.app_context():
-    db.create_all()
+    _init_db_with_retry()
     # Clean up any stale sessions from previous crashes
     stale = ScrapeSession.query.filter(
         ScrapeSession.status.in_(["starting", "running"])
@@ -880,4 +902,4 @@ def diff_sessions():
 if __name__ == "__main__":
     # Start the daily scheduler
     start_scheduler(app, lambda: _launch_scrape(source="scheduled"))
-    app.run(debug=True, port=5555, threaded=True, use_reloader=False)
+    app.run(debug=True, port=9093, threaded=True, use_reloader=False)
