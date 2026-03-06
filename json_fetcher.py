@@ -19,6 +19,7 @@ import ssl
 import urllib.request
 import base64
 import hashlib
+import threading
 from datetime import datetime, timezone
 
 from models import Connection, ScrapeSession, db
@@ -177,6 +178,26 @@ def refresh_logo_for_institution(app, institution_name, force=False):
         offset = next_offset
 
     return {"found": False, "saved": False}
+
+
+def _schedule_full_logo_upgrade(app, institution_names):
+    """Upgrade cached base64 logos to full remote logos in the background."""
+    names = [n for n in institution_names if n]
+    if not names:
+        return
+
+    def _run():
+        log.info("Starting background full-logo upgrade for %d institutions", len(names))
+        for name in names:
+            try:
+                refresh_logo_for_institution(app, name, force=True)
+            except Exception:
+                log.exception("Full-logo upgrade failed for institution: %s", name)
+        log.info("Background full-logo upgrade complete")
+
+    threading.Thread(
+        target=_run, daemon=True, name="logo-upgrade-after-scrape"
+    ).start()
 
 
 def fetch_json_connections(app, progress_callback=None, session_id=None):
@@ -345,6 +366,7 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
 
             # Cache logos after DB commit so "saving" phase reflects DB work only.
             if pending_logos:
+                base64_saved_names = set()
                 emit(
                     "progress",
                     {
@@ -358,7 +380,9 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                 for idx, (inst_name, logo_data) in enumerate(pending_logos, start=1):
                     # Keep scrape-time caching lightweight: embedded/base64 only.
                     if not logo_data.startswith(("http://", "https://")):
-                        _save_logo_to_disk(logo_dir, inst_name, logo_data)
+                        saved = _save_logo_to_disk(logo_dir, inst_name, logo_data)
+                        if saved and logo_data.startswith("data:image"):
+                            base64_saved_names.add(inst_name)
                     if idx % 500 == 0 or idx == len(pending_logos):
                         emit(
                             "progress",
@@ -370,6 +394,9 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                                 "count": total,
                             },
                         )
+
+                # Upgrade newly-written base64 logos to full remote logos asynchronously.
+                _schedule_full_logo_upgrade(app, sorted(base64_saved_names))
 
         emit(
             "complete",
