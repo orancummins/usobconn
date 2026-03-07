@@ -21,7 +21,7 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 MIN_SESSION_FIS = 5000  # Ignore sessions with fewer than this many institutions
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monarch.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
