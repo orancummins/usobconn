@@ -496,6 +496,206 @@
         .status-badge.ok { background: #00b89433; color: var(--green); }
         .status-badge.issues { background: #fdcb6e33; color: var(--yellow); }
         .status-badge.unavailable { background: #e1705533; color: var(--red); }
+        .status-detail-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .status-detail-wrap .status-detail-tip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: #1e2130;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            color: var(--yellow);
+            white-space: normal;
+            max-width: 280px;
+            min-width: 140px;
+            line-height: 1.35;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            pointer-events: none;
+            font-style: italic;
+        }
+        .status-detail-wrap:hover .status-detail-tip {
+            display: block;
+        }
+        .issue-reason-cell {
+            font-size: 0.78rem;
+            color: var(--yellow);
+            max-width: 300px;
+            line-height: 1.35;
+        }
+
+        /* Issues Analysis Section */
+        .issues-analysis-section {
+            display: none;
+            margin-top: 24px;
+        }
+        .ia-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .ia-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--yellow);
+        }
+        .ia-tabs {
+            display: flex;
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .ia-tab {
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--surface);
+            color: var(--text-dim);
+            border: none;
+            transition: all 0.15s;
+        }
+        .ia-tab:not(:last-child) { border-right: 1px solid var(--border); }
+        .ia-tab.active {
+            background: var(--yellow);
+            color: var(--bg);
+        }
+        .ia-tab:hover:not(.active) {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .ia-panel { display: none; }
+        .ia-panel.active { display: block; }
+
+        /* Trend chart tab */
+        .ia-chart-wrap {
+            position: relative;
+            height: 340px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        /* Summary tab — scrollable */
+        .ia-summary-scroll {
+            max-height: 480px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .ia-summary-scroll::-webkit-scrollbar { width: 4px; }
+        .ia-summary-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .ia-summary-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        /* Summary tab */
+        .ia-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+        .ia-prov-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .ia-prov-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 2;
+            padding: 10px 0 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .ia-prov-count {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--yellow);
+        }
+        .ia-prov-label {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+        .ia-issue-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .ia-issue-item {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text);
+        }
+        .ia-issue-item:last-child { border-bottom: none; }
+        .ia-issue-count {
+            display: inline-block;
+            min-width: 22px;
+            text-align: center;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--surface2);
+            color: var(--yellow);
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .ia-no-detail {
+            font-style: italic;
+            color: var(--text-dim);
+        }
+
+        /* Detail tab */
+        .ia-detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .ia-detail-table th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dim);
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+        .ia-detail-table th:hover { color: var(--text); }
+        .ia-detail-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .ia-detail-table tr.ia-expandable { cursor: pointer; }
+        .ia-detail-table tr.ia-expandable:hover td { background: var(--surface2); }
+        .ia-detail-table tr.ia-expand-row td {
+            padding: 0 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .ia-reason-text {
+            font-size: 0.78rem;
+            color: var(--yellow);
+            max-width: 350px;
+            line-height: 1.35;
+        }
 
         td.metric-cell {
             width: 90px;
@@ -843,6 +1043,33 @@
             font-size: 0.9rem;
             color: var(--text-dim);
         }
+
+        /* ── Loading Progress Modal ── */
+        .progress-modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+            align-items: center; justify-content: center;
+        }
+        .progress-modal-overlay.active { display: flex; }
+        .progress-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 24px 28px; width: 340px; max-width: 90%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        }
+        .progress-modal h3 { font-size: 1rem; color: var(--text); margin: 0 0 16px; }
+        .progress-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 0; font-size: 0.85rem; color: var(--text-dim);
+        }
+        .progress-item .pi-icon {
+            width: 20px; text-align: center; font-size: 0.9rem;
+        }
+        .progress-item.done { color: var(--text); }
+        .progress-item.done .pi-icon { color: #2ecc71; }
+        .progress-item.active .pi-icon { color: var(--accent-light); }
+        .progress-item.active { color: var(--text); }
+        @keyframes pi-spin { to { transform: rotate(360deg); } }
+        .pi-spinner { display: inline-block; animation: pi-spin 0.8s linear infinite; }
 
         /* Live stats during retrieval */
         #live-stats {
@@ -1587,7 +1814,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            padding: 28px 32px;
+            padding: 0;
             max-width: 620px;
             width: 90%;
             max-height: 85vh;
@@ -1598,6 +1825,17 @@
             position: relative;
         }
         .modal::-webkit-scrollbar { display: none; }
+        .modal-sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--surface);
+            padding: 28px 32px 0;
+            border-radius: 14px 14px 0 0;
+        }
+        .modal-body {
+            padding: 18px 32px 28px;
+        }
         .modal-close {
             position: absolute;
             top: 14px;
@@ -1656,6 +1894,14 @@
             font-weight: 600; transition: background 0.15s;
         }
         .btn-export:hover { background: var(--border); }
+
+        .btn-export-prominent {
+            background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; padding: 10px 20px; font-size: 0.9rem; cursor: pointer;
+            font-weight: 700; transition: background 0.15s, box-shadow 0.15s;
+            box-shadow: 0 2px 8px rgba(99,132,255,0.25);
+        }
+        .btn-export-prominent:hover { background: var(--accent-light); box-shadow: 0 4px 14px rgba(99,132,255,0.35); }
 
         /* ── Top Tab Navigation ── */
         .top-tabs {
@@ -1915,7 +2161,7 @@
             <h1>Monarch Connection Tracker <span>Financial Institution Status Monitor</span></h1>
             <div style="display:flex;align-items:center;gap:10px;">
                 <span id="next-retrieval-badge" style="display:none;font-size:0.78rem;color:var(--text-dim);white-space:nowrap;"></span>
-                <button class="info-btn" onclick="document.getElementById('info-modal').classList.add('active')" title="How scoring works">i</button>
+                <button class="info-btn" onclick="document.getElementById('info-modal').classList.add('active');switchInfoTab('overview')" title="How scoring works">i</button>
                 <button class="btn btn-primary" id="retrieve-btn" onclick="startRetrieval()">
                     &#x2913; Retrieve Data
                 </button>
@@ -1932,46 +2178,6 @@
         <!-- Dashboard View wrapper -->
         <div id="dashboard-view">
 
-        <!-- Info Modal -->
-        <div class="modal-overlay" id="info-modal" onclick="if(event.target===this)this.classList.remove('active')">
-            <div class="modal">
-                <button class="modal-close" onclick="document.getElementById('info-modal').classList.remove('active')">&times;</button>
-                <h2>How Scoring Works</h2>
-
-                <p>This tool retrieves data from <a href="https://www.monarch.com/connection-status" style="color:var(--accent-light)">Monarch's ISS API</a> and computes quality scores for each data provider (Plaid, Finicity, MX).</p>
-
-                <h3>What Monarch Shows</h3>
-                <p>For every financial institution, Monarch displays three quality metrics using a 4-block rating bar:</p>
-                <ul>
-                    <li><strong>Success Rate</strong> &mdash; How reliably the connection works when users try to link their account.</li>
-                    <li><strong>Longevity</strong> &mdash; How long connections stay active and healthy over time.</li>
-                    <li><strong>Update Frequency</strong> &mdash; How often the connection pulls fresh transaction and balance data.</li>
-                </ul>
-
-                <h3>How We Read the Bars</h3>
-                <p>Each metric is shown as 4 small colored blocks. We count how many blocks are filled (non-gray) and convert to a percentage:</p>
-                <ul>
-                    <li><strong>0 blocks filled</strong> = Not rated (excluded from averages)</li>
-                    <li><strong>1 block</strong> = 25%</li>
-                    <li><strong>2 blocks</strong> = 50%</li>
-                    <li><strong>3 blocks</strong> = 75%</li>
-                    <li><strong>4 blocks</strong> = 100%</li>
-                </ul>
-                <p>Institutions with zero filled blocks are treated as <em>unrated</em> for that metric &mdash; they are not counted as 0%, they are simply excluded from the average. This avoids penalizing providers that serve many niche institutions that Monarch hasn't rated yet.</p>
-
-                <h3>Provider Weighted Score</h3>
-                <p>For each provider, we average each metric across all rated institutions, then combine them with these weights:</p>
-                <div class="formula">Weighted Score = (Success &times; 40%) + (Longevity &times; 30%) + (Updates &times; 30%)</div>
-                <p>Success is weighted highest because it directly reflects whether users can connect their accounts. The tooltips on the chart show exactly how many institutions were rated for each metric.</p>
-
-                <h3>Retrieval History</h3>
-                <p>Each retrieval is timestamped and stored. The history panel at the bottom compares runs over time, with delta arrows showing how each metric changed from the previous retrieval. This lets you track whether providers are improving or degrading.</p>
-
-                <p class="note">Data is retrieved from Monarch's ISS API. Scores may vary between runs as Monarch updates their ratings. The retrieval fetches all ~11,000 institutions via the paginated API.</p>
-            </div>
-        </div>
-
-        <!-- Progress Panel -->
         <div id="progress-panel">
             <div class="progress-header">
                 <h3 id="progress-title">Retrieval in progress...</h3>
@@ -2000,7 +2206,7 @@
                         <select id="pmap-from-select" class="sc-date-select"></select>
                         <label>To:</label>
                         <select id="pmap-to-select" class="sc-date-select"></select>
-                        <button class="pmap-btn" id="pmap-highlight-btn" onclick="startHighlightChanges()" title="Compare changes between selected sessions">Compare</button>
+                        <button class="pmap-btn" id="pmap-highlight-btn" onclick="startHighlightChanges()" title="Compare changes between selected sessions" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;padding:6px 18px;font-size:0.85rem;">&#x25B6; Compare</button>
                         <button class="pmap-btn" id="pmap-stop-btn" onclick="stopHighlightChanges()" style="display:none;">Stop</button>
                         <span class="pmap-step-indicator" id="pmap-step-indicator"></span>
                     </div>
@@ -2125,6 +2331,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Issues Analysis Section -->
+        <div class="issues-analysis-section" id="issues-analysis-section">
+            <div class="ia-header">
+                <h3>&#x26A0;&#xFE0F; Issues Analysis</h3>
+                <div class="ia-tabs">
+                    <button class="ia-tab active" onclick="switchIaTab('trend')">Trend</button>
+                    <button class="ia-tab" onclick="switchIaTab('summary')">Summary</button>
+                    <button class="ia-tab" onclick="switchIaTab('detail')">All Issues</button>
+                </div>
+            </div>
+            <div class="ia-panel active" id="ia-trend-panel">
+                <div class="ia-chart-wrap" style="position:relative;">
+                    <canvas id="ia-trend-chart"></canvas>
+                </div>
+            </div>
+            <div class="ia-panel" id="ia-summary-panel"></div>
+            <div class="ia-panel" id="ia-detail-panel"></div>
+        </div>
+
         <!-- End Dashboard View -->
         </div>
     </div>
@@ -2140,14 +2366,12 @@
                     <option value="Finicity" selected>Finicity</option>
                     <option value="MX">MX</option>
                 </select>
-                <button class="btn btn-export" id="ct-export-btn" onclick="exportCompetitiveTrends()" style="display:none;">&#x1F4CB; Export Trends</button>
+                <button class="btn btn-export-prominent" id="ct-export-btn" onclick="exportCompetitiveTrends()" style="display:none;">&#x1F4CB; Export Trends</button>
             </div>
 
             <div class="ct-session-bar" id="ct-session-bar" style="display:none;">
-                <label>Opportunities &amp; Contenders:</label>
-                <select id="ct-session-select" onchange="loadCompetitiveTrends()"></select>
-                <span class="ct-session-arrow">&harr;</span>
-                <label>Trending compares against:</label>
+                <span id="ct-latest-label" style="font-weight:600;color:var(--text);"></span>
+                <span style="color:var(--text-dim);margin:0 6px;">compared to</span>
                 <select id="ct-compare-select" onchange="loadCompetitiveTrends()"></select>
             </div>
 
@@ -2162,7 +2386,9 @@
                     <button class="ct-tab active" onclick="switchCtTab('opportunities')">Opportunities</button>
                     <button class="ct-tab" onclick="switchCtTab('contenders')">Close Contenders</button>
                     <button class="ct-tab" onclick="switchCtTab('switchers')">Frequent Switchers</button>
-                    <button class="ct-tab" onclick="switchCtTab('trending')">Trending</button>
+                    <button class="ct-tab" onclick="switchCtTab('trending-up')">Trending Up</button>
+                    <button class="ct-tab" onclick="switchCtTab('trending-down')">Trending Down</button>
+                    <button class="ct-tab" onclick="switchCtTab('vulnerabilities')">Vulnerabilities</button>
                 </div>
 
                 <!-- Opportunities -->
@@ -2192,17 +2418,30 @@
                     </div>
                 </div>
 
-                <!-- Trending -->
-                <div id="ct-trending" class="ct-sub-view">
+                <!-- Trending Up -->
+                <div id="ct-trending-up" class="ct-sub-view">
                     <div class="ct-section">
                         <h3>&#x1F4C8; Trending Up</h3>
                         <p class="ct-subtitle">FIs where the selected aggregator is primary and quality scores improved vs previous session</p>
                         <div id="ct-trending-up-table"></div>
                     </div>
+                </div>
+
+                <!-- Trending Down -->
+                <div id="ct-trending-down" class="ct-sub-view">
                     <div class="ct-section">
                         <h3>&#x1F4C9; Trending Down</h3>
                         <p class="ct-subtitle">FIs where the selected aggregator is primary and quality scores declined — these need attention to avoid losing them</p>
                         <div id="ct-trending-down-table"></div>
+                    </div>
+                </div>
+
+                <!-- Vulnerabilities -->
+                <div id="ct-vulnerabilities" class="ct-sub-view">
+                    <div class="ct-section">
+                        <h3>&#x1F6E1; Vulnerabilities</h3>
+                        <p class="ct-subtitle">FIs where the selected aggregator is currently primary but a secondary provider is scoring higher — these accounts are at risk of being lost</p>
+                        <div id="ct-vuln-table"></div>
                     </div>
                 </div>
             </div>
@@ -2210,6 +2449,98 @@
     </div>
 
     {% if feedback_enabled %}{% include 'feedback_tab.html' %}{% endif %}
+
+    <!-- Info Modal -->
+    <div class="modal-overlay" id="info-modal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" style="max-width:700px;">
+            <div class="modal-sticky-header">
+                <button class="modal-close" onclick="document.getElementById('info-modal').classList.remove('active')">&times;</button>
+                <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:18px;">
+                    <button class="ia-tab active" onclick="switchInfoTab('overview')" style="flex:1;">App Overview</button>
+                    <button class="ia-tab" onclick="switchInfoTab('scoring')" style="flex:1;">How Scoring Works</button>
+                </div>
+            </div>
+            <div class="modal-body">
+            <div id="info-tab-overview" class="ia-panel active">
+                <h2 style="margin-bottom:12px;">Monarch Connection Tracker</h2>
+                <p>This app monitors data provider quality across ~11,000 financial institutions using <a href="https://www.monarch.com/connection-status" style="color:var(--accent-light)">Monarch's ISS API</a>. It retrieves, stores, and visualizes connection health for Plaid, Finicity, and MX.</p>
+
+                <h3>Dashboard</h3>
+                <p>The main view showing the latest retrieval data:</p>
+                <ul>
+                    <li><strong>Stats Cards</strong> &mdash; Total institutions, provider counts, issues reported, and unavailable counts. Click the Issues or Unavailable cards to see details.</li>
+                    <li><strong>Provider Score Charts</strong> &mdash; Bar charts for each metric (Success, Longevity, Updates) with weighted scores. Hover for a full breakdown.</li>
+                    <li><strong>Data Table</strong> &mdash; Every institution with rank, provider, status, and metric bars. Click a row to expand detail cards. Searchable and sortable with pagination.</li>
+                    <li><strong>Provider Map</strong> &mdash; A pixel grid where each block is one institution colored by provider. Use the <em>Compare</em> button to animate changes between two sessions &mdash; see which institutions switched providers, gained, or lost connections.</li>
+                    <li><strong>Decile Distribution</strong> &mdash; Stacked bars showing provider share across 10 rank buckets (top 10% through bottom 10%).</li>
+                </ul>
+
+                <h3>Performance &amp; Share Over Time</h3>
+                <p>Time-series charts tracking provider weighted scores and market share across all stored sessions. Use the decile dropdown to filter by rank bucket.</p>
+
+                <h3>Issues Analysis</h3>
+                <p>Appears when institutions report issues. Three sub-tabs:</p>
+                <ul>
+                    <li><strong>Trend</strong> &mdash; Chart of issue counts over time per provider.</li>
+                    <li><strong>Summary</strong> &mdash; Issues grouped by provider with cross-provider annotations.</li>
+                    <li><strong>All Issues</strong> &mdash; Sortable, paginated table of every institution with a reported issue. Click rows to expand details.</li>
+                </ul>
+
+                <h3>Provider Competitive Trends</h3>
+                <p>Compares two sessions to find competitive movements. Sub-tabs:</p>
+                <ul>
+                    <li><strong>Opportunities</strong> &mdash; Institutions where a rival is primary but your provider scores higher.</li>
+                    <li><strong>Contenders</strong> &mdash; Close scores where a small improvement could win.</li>
+                    <li><strong>Switchers</strong> &mdash; Institutions that changed primary provider between sessions.</li>
+                    <li><strong>Trending Up / Down</strong> &mdash; Providers whose scores improved or declined.</li>
+                    <li><strong>Vulnerabilities</strong> &mdash; Institutions where you're primary but a rival scores higher.</li>
+                </ul>
+
+                <h3>Session History</h3>
+                <p>The bottom bar expands to show all past retrievals with per-provider metrics and delta arrows. Click any institution row to see its individual history chart.</p>
+
+                <h3>Data Retrieval</h3>
+                <p>Click <em>Start Retrieval</em> to scrape all ~11,000 institutions from the Monarch API. A live feed shows progress. Retrievals are also scheduled automatically.</p>
+
+                <p class="note">Data sourced from Monarch's ISS API. Each retrieval captures a point-in-time snapshot of connection quality across all listed financial institutions.</p>
+            </div>
+            <div id="info-tab-scoring" class="ia-panel">
+                <h2>How Scoring Works</h2>
+
+                <p>This tool retrieves data from <a href="https://www.monarch.com/connection-status" style="color:var(--accent-light)">Monarch's ISS API</a> and computes quality scores for each data provider (Plaid, Finicity, MX).</p>
+
+                <h3>What Monarch Shows</h3>
+                <p>For every financial institution, Monarch displays three quality metrics using a 4-block rating bar:</p>
+                <ul>
+                    <li><strong>Success Rate</strong> &mdash; How reliably the connection works when users try to link their account.</li>
+                    <li><strong>Longevity</strong> &mdash; How long connections stay active and healthy over time.</li>
+                    <li><strong>Update Frequency</strong> &mdash; How often the connection pulls fresh transaction and balance data.</li>
+                </ul>
+
+                <h3>How We Read the Bars</h3>
+                <p>Each metric is shown as 4 small colored blocks. We count how many blocks are filled (non-gray) and convert to a percentage:</p>
+                <ul>
+                    <li><strong>0 blocks filled</strong> = Not rated (excluded from averages)</li>
+                    <li><strong>1 block</strong> = 25%</li>
+                    <li><strong>2 blocks</strong> = 50%</li>
+                    <li><strong>3 blocks</strong> = 75%</li>
+                    <li><strong>4 blocks</strong> = 100%</li>
+                </ul>
+                <p>Institutions with zero filled blocks are treated as <em>unrated</em> for that metric &mdash; they are not counted as 0%, they are simply excluded from the average. This avoids penalizing providers that serve many niche institutions that Monarch hasn't rated yet.</p>
+
+                <h3>Provider Weighted Score</h3>
+                <p>For each provider, we average each metric across all rated institutions, then combine them with these weights:</p>
+                <div class="formula">Weighted Score = (Success &times; 40%) + (Longevity &times; 30%) + (Updates &times; 30%)</div>
+                <p>Success is weighted highest because it directly reflects whether users can connect their accounts. The tooltips on the chart show exactly how many institutions were rated for each metric.</p>
+
+                <h3>Retrieval History</h3>
+                <p>Each retrieval is timestamped and stored. The history panel at the bottom compares runs over time, with delta arrows showing how each metric changed from the previous retrieval. This lets you track whether providers are improving or degrading.</p>
+
+                <p class="note">Data is retrieved from Monarch's ISS API. Scores may vary between runs as Monarch updates their ratings. The retrieval fetches all ~11,000 institutions via the paginated API.</p>
+            </div>
+            </div><!-- modal-body -->
+        </div>
+    </div>
 
     <!-- FI History Modal -->
     <div class="fi-modal-overlay" id="fi-modal-overlay" onclick="closeFiModal(event)">
@@ -2240,6 +2571,14 @@
         <div class="fi-modal" onclick="event.stopPropagation()">
             <button class="fi-modal-close" onclick="closeWeightedAvgModal()">&times;</button>
             <div id="weighted-avg-modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Loading Progress Modal -->
+    <div class="progress-modal-overlay" id="progress-modal">
+        <div class="progress-modal">
+            <h3 id="progress-modal-title">Loading Dashboard</h3>
+            <div id="progress-items"></div>
         </div>
     </div>
 
@@ -2274,6 +2613,27 @@
         function hidePageLoader() {
             const loader = document.getElementById('page-loader');
             if (loader) loader.style.display = 'none';
+        }
+
+        /* ── Loading Progress Modal ── */
+        function showProgress(title, steps) {
+            const modal = document.getElementById('progress-modal');
+            document.getElementById('progress-modal-title').textContent = title;
+            const container = document.getElementById('progress-items');
+            container.innerHTML = steps.map((s, i) => `<div class="progress-item" id="pi-${i}"><span class="pi-icon">&bull;</span><span>${s}</span></div>`).join('');
+            modal.classList.add('active');
+        }
+        function updateProgress(idx) {
+            const items = document.querySelectorAll('.progress-item');
+            items.forEach((el, i) => {
+                const icon = el.querySelector('.pi-icon');
+                if (i < idx) { el.className = 'progress-item done'; icon.innerHTML = '&#x2713;'; }
+                else if (i === idx) { el.className = 'progress-item active'; icon.innerHTML = '<span class="pi-spinner">&#x25E0;</span>'; }
+                else { el.className = 'progress-item'; icon.innerHTML = '&bull;'; }
+            });
+        }
+        function hideProgress() {
+            document.getElementById('progress-modal').classList.remove('active');
         }
 
         async function loadSessions() {
@@ -2329,7 +2689,12 @@
 
         async function loadSession(sessionId) {
             currentSessionId = sessionId;
+            const steps = ['Fetching connections & stats', 'Rendering stats & charts', 'Building provider map', 'Rendering data table', 'Analyzing issues'];
+            showProgress('Loading Dashboard', steps);
+            const tick = () => new Promise(r => requestAnimationFrame(r));
             try {
+                updateProgress(0);
+                await tick();
                 const [connRes, statsRes] = await Promise.all([
                     fetch(`${BASE}/api/sessions/${sessionId}/connections`),
                     fetch(`${BASE}/api/sessions/${sessionId}/stats`)
@@ -2350,21 +2715,35 @@
                 document.getElementById('live-stats').classList.add('active');
                 document.getElementById('export-btn').style.display = '';
 
+                updateProgress(1);
+                await tick();
                 renderStats(statsData);
                 currentStats = statsData;
                 renderCharts(statsData);
+
+                updateProgress(2);
+                await tick();
                 renderPixelMap();
                 // Sync pixel map session dropdown
                 const pmapToSel = document.getElementById('pmap-to-select');
                 if (pmapToSel) pmapToSel.value = sessionId;
                 renderDecileChart();
+
+                updateProgress(3);
+                await tick();
                 renderTable();
+
+                updateProgress(4);
+                await tick();
+                renderIssuesAnalysis();
 
                 const dt = new Date(connData.session.started_at);
                 document.getElementById('table-title').textContent =
                     `Connection Status — Retrieved ${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
+                hideProgress();
             } catch (e) {
                 console.error('Failed to load session:', e);
+                hideProgress();
             }
         }
 
@@ -2597,9 +2976,9 @@
             }).join('');
             fromSel.innerHTML = opts;
             toSel.innerHTML = opts;
-            // Default: from = second most recent (or oldest), to = most recent
+            // Default: from = oldest session, to = most recent
             if (pmapSessions.length >= 2) {
-                fromSel.value = pmapSessions[1].id;
+                fromSel.value = pmapSessions[pmapSessions.length - 1].id;
                 toSel.value = pmapSessions[0].id;
             } else if (pmapSessions.length === 1) {
                 fromSel.value = pmapSessions[0].id;
@@ -3662,7 +4041,7 @@
                     <td class="metric-cell">${metricCell(c.success_pct)}</td>
                     <td class="metric-cell">${metricCell(c.longevity_pct)}</td>
                     <td class="metric-cell">${metricCell(c.update_pct)}</td>
-                    <td>${statusBadge(c.connection_status)}</td>
+                    <td>${statusBadge(c.connection_status, c.status_detail)}</td>
                     <td class="info-cell"><button class="info-btn" title="View history" onclick="event.stopPropagation(); showFiHistory('${escapedName}')">i</button></td>
                 </tr>
                 <tr class="detail-row" id="${rid}" style="display:none;">
@@ -3814,7 +4193,7 @@
                 content.innerHTML = `
                     <h2>${esc(institutionName)}</h2>
                     <div class="modal-subtitle">
-                        ${statusBadge(latestStatus)}
+                        ${statusBadge(latestStatus, latest.status_detail)}
                         &middot; Rank #${latest.rank}
                         &middot; ${h.length} retrieval${h.length !== 1 ? 's' : ''}
                         &middot; ${providerDetails.length} provider${providerDetails.length !== 1 ? 's' : ''}
@@ -3912,6 +4291,7 @@
                 html += thSortable('success_pct', 'Success');
                 html += thSortable('longevity_pct', 'Longevity');
                 html += thSortable('update_pct', 'Updates');
+                html += '<th>Reason</th>';
                 html += '</tr></thead><tbody>';
                 issues.sort((a, b) => {
                     let va = a[issuesSortField], vb = b[issuesSortField];
@@ -3928,6 +4308,7 @@
                         <td>${pct(c.success_pct)}</td>
                         <td>${pct(c.longevity_pct)}</td>
                         <td>${pct(c.update_pct)}</td>
+                        <td class="issue-reason-cell">${c.status_detail ? esc(c.status_detail) : '<span style="color:var(--text-dim)">\u2014</span>'}</td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
@@ -3951,6 +4332,386 @@
             if (event && event.target !== document.getElementById('issues-modal-overlay')) return;
             document.getElementById('issues-modal-overlay').classList.remove('active');
             document.body.style.overflow = '';
+        }
+
+        // ── Issues Analysis Section ──────────────────────────────
+        let iaSortField = 'rank';
+        let iaSortAsc = true;
+        let iaDetailPage = 1;
+        let iaDetailPageSize = 50;
+
+        function switchInfoTab(tab) {
+            const modal = document.getElementById('info-modal');
+            modal.querySelectorAll('.ia-tab').forEach(t => t.classList.remove('active'));
+            modal.querySelectorAll('.ia-panel').forEach(p => p.classList.remove('active'));
+            modal.querySelector(`.ia-tab[onclick*="${tab}"]`).classList.add('active');
+            document.getElementById(`info-tab-${tab}`).classList.add('active');
+        }
+
+        function switchIaTab(tab) {
+            document.querySelectorAll('.ia-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.ia-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.ia-tab[onclick*="${tab}"]`).classList.add('active');
+            document.getElementById(`ia-${tab}-panel`).classList.add('active');
+        }
+
+        let iaTrendChart = null;
+
+        function renderIssuesAnalysis() {
+            const section = document.getElementById('issues-analysis-section');
+            const issues = currentConnections.filter(c =>
+                c.connection_status === 'Issues reported' || (c.connection_status === 'OK' && c.status_detail)
+            );
+            if (issues.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+            renderIaTrendChart();
+            renderIaSummary(issues);
+            renderIaDetail(issues);
+        }
+
+        async function renderIaTrendChart() {
+            const wrap = document.getElementById('ia-trend-chart').parentElement;
+            wrap.insertAdjacentHTML('afterbegin', '<div class="ia-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--surface);z-index:1;"><span class="pi-spinner" style="font-size:1.5rem;color:var(--text-dim);">&#x25E0;</span>&nbsp; Loading issues history&hellip;</div>');
+            try {
+                const resp = await fetch(BASE + '/api/history');
+                if (!resp.ok) {
+                    wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:0.9rem;text-align:center;padding:20px">Failed to load issues history (${resp.status})</div>`;
+                    return;
+                }
+                const history = await resp.json();
+                // Transform /api/history data into trend chart format (oldest first)
+                const data = history.reverse().map(s => ({
+                    date: s.started_at,
+                    total_issues: s.total_issues || 0,
+                    providers: Object.fromEntries(
+                        Object.entries(s.providers).map(([p, v]) => [p, v.issues_count || 0])
+                    )
+                }));
+                if (!data.length) { wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:0.9rem;">No issues history data yet</div>'; return; }
+
+                const loadingEl = wrap.querySelector('.ia-chart-loading');
+                if (loadingEl) loadingEl.remove();
+
+                // Collect all providers across all sessions
+                const provSet = new Set();
+                data.forEach(s => Object.keys(s.providers).forEach(p => provSet.add(p)));
+                const provList = [...provSet].sort();
+
+                const provColors = {
+                    'Plaid': { bg: 'rgba(93,173,226,0.15)', border: '#5dade2' },
+                    'Finicity': { bg: 'rgba(61,171,122,0.15)', border: '#3dab7a' },
+                    'MX': { bg: 'rgba(230,168,103,0.15)', border: '#e6a867' },
+                };
+                const fallback = { bg: 'rgba(139,143,163,0.15)', border: '#8b8fa3' };
+
+                const labels = data.map(s => {
+                    const d = new Date(s.date);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+
+                const datasets = provList.map(prov => {
+                    const c = provColors[prov] || fallback;
+                    return {
+                        label: prov,
+                        data: data.map(s => s.providers[prov] || 0),
+                        borderColor: c.border,
+                        backgroundColor: c.bg,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        borderWidth: 2,
+                    };
+                });
+
+                // Add total line
+                datasets.push({
+                    label: 'Total',
+                    data: data.map(s => s.total_issues),
+                    borderColor: '#fdcb6e',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [6, 3],
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    fill: false,
+                });
+
+                const ctx = document.getElementById('ia-trend-chart').getContext('2d');
+                if (iaTrendChart) iaTrendChart.destroy();
+
+                iaTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                labels: { color: '#8b8fa3', font: { size: 12 } }
+                            },
+                            tooltip: {
+                                backgroundColor: '#1e2130',
+                                titleColor: '#e1e4eb',
+                                bodyColor: '#8b8fa3',
+                                borderColor: '#2e3241',
+                                borderWidth: 1,
+                            },
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#8b8fa3', font: { size: 11 } },
+                                grid: { color: 'rgba(46,50,65,0.5)' },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#8b8fa3', font: { size: 11 }, precision: 0 },
+                                grid: { color: 'rgba(46,50,65,0.5)' },
+                                title: { display: true, text: 'Issues Reported', color: '#8b8fa3' },
+                            },
+                        },
+                    },
+                });
+            } catch (e) {
+                console.error('Issues trend chart error:', e);
+                const loadingEl = wrap.querySelector('.ia-chart-loading');
+                if (loadingEl) loadingEl.remove();
+            }
+        }
+
+        function renderIaSummary(issues) {
+            const panel = document.getElementById('ia-summary-panel');
+
+            // Group by provider
+            const byProv = {};
+            issues.forEach(c => {
+                const p = c.data_provider || 'Unknown';
+                if (!byProv[p]) byProv[p] = [];
+                byProv[p].push(c);
+            });
+
+            // Build cross-provider reason map: reason -> set of providers
+            const reasonProviders = {};
+            issues.forEach(c => {
+                const d = (c.status_detail || '').trim();
+                if (!d) return;
+                const p = c.data_provider || 'Unknown';
+                if (!reasonProviders[d]) reasonProviders[d] = new Set();
+                reasonProviders[d].add(p);
+            });
+
+            // Sort providers by issue count descending
+            const provs = Object.keys(byProv).sort((a, b) => byProv[b].length - byProv[a].length);
+
+            const miniProvBadge = (p) => {
+                const cls = p.toLowerCase().replace(/[^a-z]/g, '');
+                return `<span class="provider-badge ${cls}" style="font-size:0.6rem;padding:1px 5px;margin-left:2px;vertical-align:middle;">${esc(p)}</span>`;
+            };
+
+            const cards = provs.map(prov => {
+                const list = byProv[prov];
+                // Group reasons, collect FIs per reason
+                const reasonFIs = {};
+                let noDetailFIs = [];
+                list.forEach(c => {
+                    const d = (c.status_detail || '').trim();
+                    if (!d) { noDetailFIs.push(c); return; }
+                    if (!reasonFIs[d]) reasonFIs[d] = [];
+                    reasonFIs[d].push(c);
+                });
+                const reasons = Object.entries(reasonFIs).sort((a, b) => b[1].length - a[1].length);
+
+                let listHtml = '';
+                if (reasons.length > 0) {
+                    listHtml = '<ul class="ia-issue-list">' + reasons.map(([reason, fis]) => {
+                        const otherProvs = [...(reasonProviders[reason] || [])].filter(p => p !== prov);
+                        let suffix = '';
+                        if (otherProvs.length > 0) {
+                            suffix = `<span style="margin-left:6px;font-size:0.68rem;color:var(--text-dim);">Also affects</span> ` + otherProvs.map(p => miniProvBadge(p)).join('');
+                        }
+                        const fiList = fis.sort((a, b) => (a.rank || 0) - (b.rank || 0)).map(c =>
+                            `<span style="font-size:0.72rem;color:var(--text-dim);"><span style="color:var(--accent-light);font-weight:600;">#${c.rank || '?'}</span> ${esc(c.institution_name)}</span>`
+                        ).join('<span style="color:var(--border);margin:0 4px;">·</span>');
+                        return `<li class="ia-issue-item">
+                            <div>${esc(reason)}${suffix}</div>
+                            <div style="margin-top:3px;line-height:1.6;">${fiList}</div>
+                        </li>`;
+                    }).join('') + '</ul>';
+                }
+                if (noDetailFIs.length > 0) {
+                    const ndList = noDetailFIs.sort((a, b) => (a.rank || 0) - (b.rank || 0)).map(c =>
+                        `<span style="font-size:0.72rem;color:var(--text-dim);"><span style="color:var(--accent-light);font-weight:600;">#${c.rank || '?'}</span> ${esc(c.institution_name)}</span>`
+                    ).join('<span style="color:var(--border);margin:0 4px;">·</span>');
+                    listHtml += `<div class="ia-no-detail" style="margin-top:6px;font-size:0.78rem;">${noDetailFIs.length} institution${noDetailFIs.length > 1 ? 's' : ''} with no detail provided<div style="margin-top:3px;line-height:1.6;">${ndList}</div></div>`;
+                }
+                if (reasons.length === 0 && noDetailFIs.length === 0) {
+                    listHtml = '<div class="ia-no-detail">No issue details available</div>';
+                }
+
+                return `
+                <div class="ia-prov-card">
+                    <div class="ia-prov-header">
+                        ${providerBadge(prov)}
+                        <div>
+                            <span class="ia-prov-count">${list.length}</span>
+                            <span class="ia-prov-label">issue${list.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    </div>
+                    ${listHtml}
+                </div>`;
+            }).join('');
+
+            panel.innerHTML = `
+                <div style="margin-bottom:12px;font-size:0.85rem;color:var(--text-dim);">
+                    ${issues.length} institution${issues.length !== 1 ? 's' : ''} with reported issues across ${provs.length} provider${provs.length !== 1 ? 's' : ''}
+                </div>
+                <div class="ia-summary-scroll">
+                    <div class="ia-summary-grid">${cards}</div>
+                </div>
+                <div style="margin-top:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--text-dim);line-height:1.5;">
+                    <strong style="color:var(--text);">About the issue list:</strong> Each issue is a distinct description reported by the provider. When the same issue also appears under a different provider, you'll see <em>Also affects</em> followed by the other affected provider names.
+                </div>`;
+        }
+
+        function renderIaDetail(issues) {
+            const panel = document.getElementById('ia-detail-panel');
+            const arrow = iaSortAsc ? ' \u25B2' : ' \u25BC';
+            const thSort = (field, label) => {
+                const active = iaSortField === field;
+                return `<th onclick="sortIaDetail('${field}')">${label}${active ? arrow : ''}</th>`;
+            };
+
+            const sorted = [...issues].sort((a, b) => {
+                let va = a[iaSortField], vb = b[iaSortField];
+                if (va == null) va = iaSortAsc ? Infinity : -Infinity;
+                if (vb == null) vb = iaSortAsc ? Infinity : -Infinity;
+                if (typeof va === 'string') return iaSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+                return iaSortAsc ? va - vb : vb - va;
+            });
+
+            const totalItems = sorted.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / iaDetailPageSize));
+            if (iaDetailPage > totalPages) iaDetailPage = totalPages;
+            const startIdx = (iaDetailPage - 1) * iaDetailPageSize;
+            const endIdx = Math.min(startIdx + iaDetailPageSize, totalItems);
+            const pageItems = sorted.slice(startIdx, endIdx);
+
+            const pct = v => v != null ? v.toFixed(1) + '%' : '\u2014';
+
+            const rows = pageItems.map((c, i) => {
+                const rid = `ia-detail-${startIdx + i}`;
+                const escapedName = esc(c.institution_name).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                return `
+                <tr class="ia-expandable" onclick="toggleIaDetail('${rid}')">
+                    <td>${c.rank}</td>
+                    <td style="white-space:nowrap;">${esc(c.institution_name)}</td>
+                    <td>${providerBadge(c.data_provider)}</td>
+                    <td>${pct(c.success_pct)}</td>
+                    <td>${pct(c.longevity_pct)}</td>
+                    <td>${pct(c.update_pct)}</td>
+                    <td class="ia-reason-text">${c.status_detail ? esc(c.status_detail) : '<span style="color:var(--text-dim)">\u2014</span>'}</td>
+                </tr>
+                <tr class="ia-expand-row" id="${rid}" style="display:none;">
+                    <td colspan="7">${buildDetailPanel(c)}</td>
+                </tr>`;
+            }).join('');
+
+            let paginationHtml = '';
+            if (totalItems > iaDetailPageSize) {
+                const showStart = startIdx + 1;
+                let pageButtons = [];
+                const addBtn = (p) => pageButtons.push(`<button class="${p === iaDetailPage ? 'active' : ''}" onclick="goToIaDetailPage(${p})">${p}</button>`);
+                const addEllipsis = () => pageButtons.push('<span class="page-ellipsis">&hellip;</span>');
+                if (totalPages <= 7) {
+                    for (let p = 1; p <= totalPages; p++) addBtn(p);
+                } else {
+                    addBtn(1);
+                    if (iaDetailPage > 3) addEllipsis();
+                    for (let p = Math.max(2, iaDetailPage - 1); p <= Math.min(totalPages - 1, iaDetailPage + 1); p++) addBtn(p);
+                    if (iaDetailPage < totalPages - 2) addEllipsis();
+                    addBtn(totalPages);
+                }
+                paginationHtml = `
+                <div class="pagination" style="margin-top:10px;">
+                    <div class="pagination-info">
+                        <span>Showing ${showStart}\u2013${endIdx} of ${totalItems}</span>
+                        <select onchange="changeIaDetailPageSize(+this.value)">
+                            ${[25, 50, 100, 200].map(n =>
+                                `<option value="${n}" ${n === iaDetailPageSize ? 'selected' : ''}>${n} per page</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="pagination-nav">
+                        <button onclick="goToIaDetailPage(1)" ${iaDetailPage === 1 ? 'disabled' : ''}>&laquo;</button>
+                        <button onclick="goToIaDetailPage(${iaDetailPage - 1})" ${iaDetailPage === 1 ? 'disabled' : ''}>&lsaquo;</button>
+                        ${pageButtons.join('')}
+                        <button onclick="goToIaDetailPage(${iaDetailPage + 1})" ${iaDetailPage === totalPages ? 'disabled' : ''}>&rsaquo;</button>
+                        <button onclick="goToIaDetailPage(${totalPages})" ${iaDetailPage === totalPages ? 'disabled' : ''}>&raquo;</button>
+                    </div>
+                </div>`;
+            } else {
+                paginationHtml = `<div class="pagination" style="margin-top:10px;"><div class="pagination-info"><span>Showing all ${totalItems} institutions</span></div><div></div></div>`;
+            }
+
+            panel.innerHTML = `
+                <table class="ia-detail-table">
+                    <thead><tr>
+                        ${thSort('rank', '#')}
+                        ${thSort('institution_name', 'Institution')}
+                        ${thSort('data_provider', 'Provider')}
+                        ${thSort('success_pct', 'Success')}
+                        ${thSort('longevity_pct', 'Longevity')}
+                        ${thSort('update_pct', 'Updates')}
+                        <th>Reason</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                ${paginationHtml}`;
+        }
+
+        function sortIaDetail(field) {
+            if (iaSortField === field) {
+                iaSortAsc = !iaSortAsc;
+            } else {
+                iaSortField = field;
+                iaSortAsc = true;
+            }
+            iaDetailPage = 1;
+            const issues = currentConnections.filter(c =>
+                c.connection_status === 'Issues reported' || (c.connection_status === 'OK' && c.status_detail)
+            );
+            renderIaDetail(issues);
+        }
+
+        function goToIaDetailPage(page) {
+            const issues = currentConnections.filter(c =>
+                c.connection_status === 'Issues reported' || (c.connection_status === 'OK' && c.status_detail)
+            );
+            const totalPages = Math.max(1, Math.ceil(issues.length / iaDetailPageSize));
+            iaDetailPage = Math.max(1, Math.min(page, totalPages));
+            renderIaDetail(issues);
+            document.getElementById('ia-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function changeIaDetailPageSize(newSize) {
+            const firstVisibleIdx = (iaDetailPage - 1) * iaDetailPageSize;
+            iaDetailPageSize = newSize;
+            iaDetailPage = Math.floor(firstVisibleIdx / iaDetailPageSize) + 1;
+            const issues = currentConnections.filter(c =>
+                c.connection_status === 'Issues reported' || (c.connection_status === 'OK' && c.status_detail)
+            );
+            renderIaDetail(issues);
+        }
+
+        function toggleIaDetail(rid) {
+            const row = document.getElementById(rid);
+            if (!row) return;
+            row.style.display = row.style.display === 'none' ? '' : 'none';
         }
 
         let unavailSortField = 'rank';
@@ -4189,7 +4950,8 @@
             const statusSection = `
                 <div class="detail-status-card">
                     <div class="card-label">Connection Status</div>
-                    <div style="margin-top:8px;">${statusBadge(c.connection_status)}</div>
+                    <div style="margin-top:8px;">${statusBadge(c.connection_status, c.status_detail)}</div>
+                    ${c.status_detail ? `<div style="margin-top:8px;font-size:0.82rem;color:var(--accent-warn);">${esc(c.status_detail)}</div>` : ''}
                     <div style="margin-top:12px;font-size:0.82rem;color:var(--text-dim);">
                         Rank #${c.rank} &middot; ${providerDetails.length} provider${providerDetails.length > 1 ? 's' : ''}
                     </div>
@@ -4264,11 +5026,16 @@
             return `<span class="provider-badge ${cls}">${esc(prov)}</span>`;
         }
 
-        function statusBadge(status) {
-            if (!status || status === 'OK') return '<span class="status-badge ok">OK</span>';
-            if (status === 'Issues reported') return '<span class="status-badge issues">Issues</span>';
-            if (status === 'Unavailable') return '<span class="status-badge unavailable">Down</span>';
-            return `<span class="status-badge">${esc(status)}</span>`;
+        function statusBadge(status, detail) {
+            let badge;
+            if (!status || status === 'OK') badge = '<span class="status-badge ok">OK</span>';
+            else if (status === 'Issues reported') badge = '<span class="status-badge issues">Issues</span>';
+            else if (status === 'Unavailable') badge = '<span class="status-badge unavailable">Down</span>';
+            else badge = `<span class="status-badge">${esc(status)}</span>`;
+            if (detail) {
+                badge = `<div class="status-detail-wrap">${badge}<div class="status-detail-tip">${esc(detail)}</div></div>`;
+            }
+            return badge;
         }
 
         function fmtPct(v) {
@@ -5095,7 +5862,7 @@
             compView.classList.toggle('active', tab === 'competitive');
             if (fbView) fbView.classList.toggle('active', tab === 'feedback');
 
-            if (tab === 'competitive') loadCompetitiveTrends();
+            if (tab === 'competitive' && !ctDataLoaded) loadCompetitiveTrends();
             if (tab === 'feedback' && typeof loadFeedback === 'function') loadFeedback();
         }
 
@@ -5105,8 +5872,10 @@
         let ctSessionsPopulated = false;
         var ctOppPage = 1, ctContPage = 1;
         const CT_PAGE_SIZE = 50;
+        const ctPage = { opp: 1, cont: 1, vuln: 1 };
         let ctOppSort = { field: 'score_gap', asc: false };
         let ctContSort = { field: 'rank', asc: true };
+        let ctVulnSort = { field: 'vulnerability_gap', asc: false };
 
         function ctFmtDate(iso) {
             if (!iso) return '?';
@@ -5115,23 +5884,27 @@
         }
 
         function populateCtSessions(sessions, selectedId, compareId) {
-            const sessSel = document.getElementById('ct-session-select');
             const compSel = document.getElementById('ct-compare-select');
-            const opts = sessions.map(s => {
+            // Latest session label
+            const latest = sessions.find(s => s.id === selectedId) || sessions[0];
+            if (latest) {
+                const d = new Date(latest.started_at);
+                document.getElementById('ct-latest-label').textContent = 'Latest scrape ' + d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            }
+            // Compare dropdown: all sessions except the latest
+            const compareOpts = sessions.filter(s => s.id !== (latest ? latest.id : null)).map(s => {
                 const d = new Date(s.started_at);
                 const label = d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' (' + (s.total_institutions || 0).toLocaleString() + ' FIs)';
                 return '<option value="' + s.id + '">' + esc(label) + '</option>';
             }).join('');
-            sessSel.innerHTML = opts;
-            compSel.innerHTML = opts;
-            if (selectedId) sessSel.value = selectedId;
+            compSel.innerHTML = compareOpts;
             if (compareId) compSel.value = compareId;
             ctSessionsPopulated = true;
             document.getElementById('ct-session-bar').style.display = '';
         }
 
         function switchCtTab(tab) {
-            const tabs = ['opportunities', 'contenders', 'switchers', 'trending'];
+            const tabs = ['opportunities', 'contenders', 'switchers', 'trending-up', 'trending-down', 'vulnerabilities'];
             document.querySelectorAll('.ct-tab').forEach((btn, i) => {
                 btn.classList.toggle('active', tabs[i] === tab);
             });
@@ -5143,16 +5916,20 @@
 
         async function loadCompetitiveTrends() {
             const aggregator = document.getElementById('ct-aggregator-select').value;
-            const sessSel = document.getElementById('ct-session-select');
             const compSel = document.getElementById('ct-compare-select');
             let url = `${BASE}/api/competitive-trends?aggregator=${encodeURIComponent(aggregator)}`;
-            if (ctSessionsPopulated && sessSel.value) url += `&session_id=${sessSel.value}`;
             if (ctSessionsPopulated && compSel.value) url += `&compare_session_id=${compSel.value}`;
+
+            const ctSteps = ['Fetching competitive data', 'Analyzing opportunities & contenders', 'Computing trends & vulnerabilities'];
+            showProgress('Loading Competitive Trends', ctSteps);
 
             document.getElementById('ct-loading').style.display = '';
             document.getElementById('ct-content').style.display = 'none';
 
+            const tick = () => new Promise(r => requestAnimationFrame(r));
             try {
+                updateProgress(0);
+                await tick();
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('API error');
                 ctData = await res.json();
@@ -5171,16 +5948,25 @@
                 document.getElementById('ct-content').style.display = '';
                 document.getElementById('ct-export-btn').style.display = '';
 
+                updateProgress(1);
+                await tick();
                 renderCtSummary();
-                ctOppPage = 1;
-                ctContPage = 1;
+                ctPage.opp = 1;
+                ctPage.cont = 1;
+                ctPage.vuln = 1;
                 renderCtOpportunities();
                 renderCtContenders();
+
+                updateProgress(2);
+                await tick();
                 renderCtSwitchers();
                 renderCtTrending();
+                renderCtVulnerabilities();
+                hideProgress();
             } catch (e) {
                 console.error('Failed to load competitive trends:', e);
                 document.getElementById('ct-loading').innerHTML = '<div class="ct-no-data">Failed to load competitive data. Make sure you have completed scrape sessions.</div>';
+                hideProgress();
             }
         }
 
@@ -5238,6 +6024,10 @@
                     <div class="ct-summary-val amber">${s.close_contenders_count}</div>
                     <div class="ct-summary-label">Close Contenders (Within 5pts)</div>
                 </div>
+                <div class="ct-summary-card">
+                    <div class="ct-summary-val" style="color:var(--red)">${s.vulnerabilities_count || 0}</div>
+                    <div class="ct-summary-label">Vulnerabilities (At Risk)</div>
+                </div>
             `;
         }
 
@@ -5259,7 +6049,8 @@
 
             const total = sorted.length;
             const totalPages = Math.ceil(total / CT_PAGE_SIZE);
-            const start = (ctOppPage - 1) * CT_PAGE_SIZE;
+            if (ctPage.opp > totalPages) ctPage.opp = totalPages;
+            const start = (ctPage.opp - 1) * CT_PAGE_SIZE;
             const page = sorted.slice(start, start + CT_PAGE_SIZE);
             const agg = ctData.aggregator;
 
@@ -5276,10 +6067,10 @@
             html += '<th>Metric Breakdown</th>';
             html += '</tr></thead><tbody>';
 
-            page.forEach(o => {
+            page.forEach((o, i) => {
                 const gapW = Math.min(100, Math.abs(o.score_gap || 0) * 2);
                 html += '<tr>';
-                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${o.rank}</td>`;
+                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
                 html += ctClickableName(o.institution_name);
                 html += `<td>${esc(o.institution_type || 'UnMatched')}</td>`;
                 html += `<td>${providerBadge(o.primary_provider)}</td>`;
@@ -5295,7 +6086,7 @@
             });
 
             html += '</tbody></table>';
-            html += renderCtPagination(total, totalPages, ctOppPage, 'ctOppPage', 'renderCtOpportunities');
+            html += renderCtPagination(total, totalPages, ctPage.opp, 'opp', 'renderCtOpportunities');
             container.innerHTML = html;
         }
 
@@ -5317,7 +6108,8 @@
 
             const total = sorted.length;
             const totalPages = Math.ceil(total / CT_PAGE_SIZE);
-            const start = (ctContPage - 1) * CT_PAGE_SIZE;
+            if (ctPage.cont > totalPages) ctPage.cont = totalPages;
+            const start = (ctPage.cont - 1) * CT_PAGE_SIZE;
             const page = sorted.slice(start, start + CT_PAGE_SIZE);
             const agg = ctData.aggregator;
 
@@ -5333,7 +6125,7 @@
             html += '<th>What to Improve</th>';
             html += '</tr></thead><tbody>';
 
-            page.forEach(o => {
+            page.forEach((o, i) => {
                 // Identify which metrics need improvement
                 let improvements = [];
                 if (o.aggregator_success != null && o.primary_success != null && o.aggregator_success < o.primary_success) {
@@ -5347,7 +6139,7 @@
                 }
 
                 html += '<tr>';
-                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${o.rank}</td>`;
+                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
                 html += ctClickableName(o.institution_name);
                 html += `<td>${esc(o.institution_type || 'UnMatched')}</td>`;
                 html += `<td>${providerBadge(o.primary_provider)}</td>`;
@@ -5364,7 +6156,7 @@
             });
 
             html += '</tbody></table>';
-            html += renderCtPagination(total, totalPages, ctContPage, 'ctContPage', 'renderCtContenders');
+            html += renderCtPagination(total, totalPages, ctPage.cont, 'cont', 'renderCtContenders');
             container.innerHTML = html;
         }
 
@@ -5425,9 +6217,9 @@
                 html += '<table class="ct-table"><thead><tr>';
                 html += '<th>#</th><th>Institution</th><th>Type</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
                 html += '</tr></thead><tbody>';
-                upItems.forEach(t => {
+                upItems.forEach((t, i) => {
                     html += '<tr>';
-                    html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${t.rank}</td>`;
+                    html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${i + 1}</td>`;
                     html += ctClickableName(t.institution_name);
                     html += `<td>${esc(t.institution_type || 'UnMatched')}</td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.previous_score)}">${ctFmtScore(t.previous_score)}</span></td>`;
@@ -5448,9 +6240,9 @@
                 let html = '<table class="ct-table"><thead><tr>';
                 html += '<th>#</th><th>Institution</th><th>Type</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
                 html += '</tr></thead><tbody>';
-                downItems.forEach(t => {
+                downItems.forEach((t, i) => {
                     html += '<tr>';
-                    html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${t.rank}</td>`;
+                    html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${i + 1}</td>`;
                     html += ctClickableName(t.institution_name);
                     html += `<td>${esc(t.institution_type || 'UnMatched')}</td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.previous_score)}">${ctFmtScore(t.previous_score)}</span></td>`;
@@ -5463,6 +6255,62 @@
             }
         }
 
+        function renderCtVulnerabilities() {
+            const agg = ctData.aggregator;
+            const items = ctData.vulnerabilities || [];
+            const container = document.getElementById('ct-vuln-table');
+            if (items.length === 0) {
+                container.innerHTML = '<div class="ct-no-data">No vulnerabilities found — ' + esc(agg) + ' is not being out-scored on any FI where it is currently primary.</div>';
+                return;
+            }
+            const sorted = [...items].sort((a, b) => {
+                let va = a[ctVulnSort.field], vb = b[ctVulnSort.field];
+                if (va == null) va = ctVulnSort.asc ? Infinity : -Infinity;
+                if (vb == null) vb = ctVulnSort.asc ? Infinity : -Infinity;
+                if (typeof va === 'string') return ctVulnSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                return ctVulnSort.asc ? va - vb : vb - va;
+            });
+            const total = sorted.length;
+            const totalPages = Math.ceil(total / CT_PAGE_SIZE);
+            if (ctPage.vuln > totalPages) ctPage.vuln = totalPages;
+            const start = (ctPage.vuln - 1) * CT_PAGE_SIZE;
+            const page = sorted.slice(start, start + CT_PAGE_SIZE);
+
+            const arrow = (f) => ctVulnSort.field === f ? (ctVulnSort.asc ? ' \u25B2' : ' \u25BC') : '';
+            let html = '<table class="ct-table"><thead><tr>';
+            html += `<th onclick="sortCtVuln('rank')"># ${arrow('rank')}</th>`;
+            html += `<th onclick="sortCtVuln('institution_name')">Institution${arrow('institution_name')}</th>`;
+            html += `<th onclick="sortCtVuln('aggregator_score')">${esc(agg)} Score${arrow('aggregator_score')}</th>`;
+            html += `<th onclick="sortCtVuln('threat_provider')">Threat Provider${arrow('threat_provider')}</th>`;
+            html += `<th onclick="sortCtVuln('threat_score')">Threat Score${arrow('threat_score')}</th>`;
+            html += `<th onclick="sortCtVuln('vulnerability_gap')">Gap${arrow('vulnerability_gap')}</th>`;
+            html += '</tr></thead><tbody>';
+            page.forEach((v, i) => {
+                html += '<tr>';
+                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
+                html += ctClickableName(v.institution_name);
+                html += `<td><span class="ct-score ${ctScoreCls(v.aggregator_score)}">${ctFmtScore(v.aggregator_score)}</span></td>`;
+                html += `<td>${providerBadge(v.threat_provider)}</td>`;
+                html += `<td><span class="ct-score ${ctScoreCls(v.threat_score)}">${ctFmtScore(v.threat_score)}</span></td>`;
+                html += `<td><span class="ct-delta down">\u25BC -${v.vulnerability_gap.toFixed(1)}</span></td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            html += renderCtPagination(total, totalPages, ctPage.vuln, 'vuln', 'renderCtVulnerabilities');
+            container.innerHTML = html;
+        }
+
+        function sortCtVuln(field) {
+            if (ctVulnSort.field === field) {
+                ctVulnSort.asc = !ctVulnSort.asc;
+            } else {
+                ctVulnSort.field = field;
+                ctVulnSort.asc = field === 'rank' || field === 'institution_name';
+            }
+            ctPage.vuln = 1;
+            renderCtVulnerabilities();
+        }
+
         function sortCtOpp(field) {
             if (ctOppSort.field === field) {
                 ctOppSort.asc = !ctOppSort.asc;
@@ -5470,7 +6318,7 @@
                 ctOppSort.field = field;
                 ctOppSort.asc = field === 'rank' || field === 'institution_name';
             }
-            ctOppPage = 1;
+            ctPage.opp = 1;
             renderCtOpportunities();
         }
 
@@ -5481,12 +6329,12 @@
                 ctContSort.field = field;
                 ctContSort.asc = field === 'rank' || field === 'institution_name';
             }
-            ctContPage = 1;
+            ctPage.cont = 1;
             renderCtContenders();
         }
 
-        function ctGoToPage(varName, renderFn, page) {
-            window[varName] = page;
+        function ctGoToPage(key, renderFn, page) {
+            ctPage[key] = page;
             window[renderFn]();
         }
 
@@ -5709,15 +6557,15 @@
             w.document.close();
         }
 
-        function renderCtPagination(total, totalPages, currentPg, pageVar, renderFn) {
+        function renderCtPagination(total, totalPages, currentPg, pageKey, renderFn) {
             if (totalPages <= 1) return `<div class="ct-pagination"><span>Showing all ${total} items</span></div>`;
             const start = (currentPg - 1) * CT_PAGE_SIZE + 1;
             const end = Math.min(currentPg * CT_PAGE_SIZE, total);
             return `<div class="ct-pagination">
                 <span>Showing ${start}–${end} of ${total}</span>
                 <div>
-                    <button onclick="ctGoToPage('${pageVar}','${renderFn}',${currentPg - 1})" ${currentPg <= 1 ? 'disabled' : ''}>&lsaquo; Prev</button>
-                    <button onclick="ctGoToPage('${pageVar}','${renderFn}',${currentPg + 1})" ${currentPg >= totalPages ? 'disabled' : ''}>Next &rsaquo;</button>
+                    <button onclick="ctGoToPage('${pageKey}','${renderFn}',${currentPg - 1})" ${currentPg <= 1 ? 'disabled' : ''}>&lsaquo; Prev</button>
+                    <button onclick="ctGoToPage('${pageKey}','${renderFn}',${currentPg + 1})" ${currentPg >= totalPages ? 'disabled' : ''}>Next &rsaquo;</button>
                 </div>
             </div>`;
         }

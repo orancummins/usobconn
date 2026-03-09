@@ -347,6 +347,8 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                 else:
                     status = "OK"
 
+                status_detail = item.get("has_issues_reported_message") or None
+
                 # Build per-provider detail (same shape the scraper stored)
                 provider_details = []
                 for dpm in dpm_list:
@@ -420,6 +422,7 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
                     update_pct=update_pct,
                     update_frequency=LEVEL_LABELS.get(update_pct),
                     connection_status=status,
+                    status_detail=status_detail,
                     institution_type=inst_type,
                 )
                 db.session.add(conn)

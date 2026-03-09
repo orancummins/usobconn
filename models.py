@@ -61,6 +61,7 @@ class Connection(db.Model):
     connection_status = db.Column(
         db.String(50), nullable=True
     )  # "OK", "Issues reported", "Unavailable"
+    status_detail = db.Column(db.Text, nullable=True)  # e.g. "Crypto accounts are not supported."
 
     # classification based on Mastercard Open Finance attributes
     institution_type = db.Column(
@@ -81,5 +82,6 @@ class Connection(db.Model):
             "update_frequency": self.update_frequency,
             "update_pct": self.update_pct,
             "connection_status": self.connection_status,
+            "status_detail": self.status_detail,
             "institution_type": self.institution_type,
         }

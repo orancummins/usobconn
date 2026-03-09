@@ -84,18 +84,19 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
-
-    # If the new institution_type column hasn't been added to an existing
-    # database, try to migrate it manually (SQLite doesn't alter automatically).
-    try:
-        # SQLite allows ADD COLUMN in-place; other engines will ignore if
-        # column exists or raise – catch and ignore errors.
-        db.session.execute(
-            "ALTER TABLE connections ADD COLUMN institution_type TEXT NOT NULL DEFAULT 'UnMatched'"
-        )
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
+    # Add columns that may be missing from older databases
+    from sqlalchemy import inspect as _sa_inspect, text as _sa_text
+    _insp = _sa_inspect(db.engine)
+    _conn_cols = {c["name"] for c in _insp.get_columns("connections")}
+    if "status_detail" not in _conn_cols:
+        with db.engine.begin() as _c:
+            _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN status_detail TEXT"))
+    if "connection_status" not in _conn_cols:
+        with db.engine.begin() as _c:
+            _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN connection_status VARCHAR(50)"))
+    if "institution_type" not in _conn_cols:
+        with db.engine.begin() as _c:
+            _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN institution_type TEXT NOT NULL DEFAULT 'UnMatched'"))
 
     # Clean up any stale sessions from previous crashes
     stale = ScrapeSession.query.filter(
@@ -486,10 +487,13 @@ def get_history():
 
         provider_metrics: dict[str, dict] = {}
         provider_counts: dict[str, int] = {}
+        provider_issues: dict[str, int] = {}
 
         for c in connections:
             prov = c.data_provider or "Unknown"
             provider_counts[prov] = provider_counts.get(prov, 0) + 1
+            if c.connection_status == "Issues reported":
+                provider_issues[prov] = provider_issues.get(prov, 0) + 1
             if prov not in provider_metrics:
                 provider_metrics[prov] = {"success": [], "longevity": [], "update": []}
             if c.success_pct is not None:
@@ -519,14 +523,57 @@ def get_history():
                 "update": avg_u,
                 "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
                 "count": provider_counts.get(prov, 0),
+                "issues_count": provider_issues.get(prov, 0),
             }
 
+        total = len(connections) if decile is not None else (sess.total_institutions or len(connections))
         results.append({
             "session_id": sess.id,
             "started_at": sess.started_at.isoformat() if sess.started_at else None,
-            "total_institutions": sess.total_institutions or len(connections),
+            "total_institutions": total,
+            "total_issues": sum(provider_issues.values()),
             "providers": providers,
         })
+
+    return jsonify(results)
+
+
+@app.route("/api/issues-history")
+@login_required
+def get_issues_history():
+    """Return per-provider issues count for each completed session over time."""
+    try:
+        sessions = (
+            ScrapeSession.query.filter_by(status="completed")
+            .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
+            .order_by(ScrapeSession.started_at.asc())
+            .all()
+        )
+
+        results = []
+        for sess in sessions:
+            # Only query the two columns we need — avoids loading all columns
+            # (which can fail if schema migrations haven't run) and is faster.
+            rows = (
+                db.session.query(Connection.data_provider)
+                .filter_by(scrape_session_id=sess.id, connection_status="Issues reported")
+                .all()
+            )
+            provider_issues = {}
+            for (prov,) in rows:
+                p = prov or "Unknown"
+                provider_issues[p] = provider_issues.get(p, 0) + 1
+
+            results.append({
+                "session_id": sess.id,
+                "date": sess.started_at.isoformat() if sess.started_at else None,
+                "total_issues": sum(provider_issues.values()),
+                "providers": provider_issues,
+            })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
     return jsonify(results)
 
@@ -709,6 +756,7 @@ def get_institution_history(name):
                 "longevity_pct": conn.longevity_pct,
                 "update_pct": conn.update_pct,
                 "connection_status": conn.connection_status,
+                "status_detail": conn.status_detail,
             })
 
     return jsonify({"institution_name": name, "history": history})
@@ -1155,6 +1203,28 @@ def competitive_trends():
     ]
     close_contenders.sort(key=lambda x: x.get("rank", 9999))
 
+    # Where aggregator IS primary but a secondary provider scores higher
+    vulnerabilities = []
+    for f in fi_provider_data:
+        if not f["is_primary"]:
+            continue
+        best_rival = None
+        best_rival_score = None
+        for p in f.get("all_providers", []):
+            if p["name"] == aggregator:
+                continue
+            if p["score"] is not None and (best_rival_score is None or p["score"] > best_rival_score):
+                best_rival = p
+                best_rival_score = p["score"]
+        if best_rival and f["aggregator_score"] is not None and best_rival_score is not None:
+            if best_rival_score > f["aggregator_score"]:
+                gap = round(best_rival_score - f["aggregator_score"], 2)
+                f["threat_provider"] = best_rival["name"]
+                f["threat_score"] = best_rival_score
+                f["vulnerability_gap"] = gap
+                vulnerabilities.append(f)
+    vulnerabilities.sort(key=lambda x: (-x.get("vulnerability_gap", 0), x.get("rank", 9999)))
+
     return jsonify({
         "aggregator": aggregator,
         "session": latest.to_dict(),
@@ -1168,9 +1238,11 @@ def competitive_trends():
             "avg_secondary_score": round(sum(secondary_scores) / len(secondary_scores), 2) if secondary_scores else None,
             "opportunities_count": len(opportunities),
             "close_contenders_count": len(close_contenders),
+            "vulnerabilities_count": len(vulnerabilities),
         },
         "opportunities": opportunities,
         "close_contenders": close_contenders,
+        "vulnerabilities": vulnerabilities,
         "frequent_switchers": switchers_list,
         "trending_up": trending_up,
         "trending_down": trending_down,
