@@ -1895,6 +1895,14 @@
         }
         .btn-export:hover { background: var(--border); }
 
+        .btn-export-prominent {
+            background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; padding: 10px 20px; font-size: 0.9rem; cursor: pointer;
+            font-weight: 700; transition: background 0.15s, box-shadow 0.15s;
+            box-shadow: 0 2px 8px rgba(99,132,255,0.25);
+        }
+        .btn-export-prominent:hover { background: var(--accent-light); box-shadow: 0 4px 14px rgba(99,132,255,0.35); }
+
         /* ── Top Tab Navigation ── */
         .top-tabs {
             display: flex;
@@ -2357,7 +2365,7 @@
                     <option value="Finicity" selected>Finicity</option>
                     <option value="MX">MX</option>
                 </select>
-                <button class="btn btn-export" id="ct-export-btn" onclick="exportCompetitiveTrends()" style="display:none;">&#x1F4CB; Export Trends</button>
+                <button class="btn btn-export-prominent" id="ct-export-btn" onclick="exportCompetitiveTrends()" style="display:none;">&#x1F4CB; Export Trends</button>
             </div>
 
             <div class="ct-session-bar" id="ct-session-bar" style="display:none;">
@@ -5857,10 +5865,11 @@
         let ctData = null;
         let ctDataLoaded = false;
         let ctSessionsPopulated = false;
-        let ctOppPage = 1, ctContPage = 1;
         const CT_PAGE_SIZE = 50;
+        const ctPage = { opp: 1, cont: 1, vuln: 1 };
         let ctOppSort = { field: 'score_gap', asc: false };
         let ctContSort = { field: 'rank', asc: true };
+        let ctVulnSort = { field: 'vulnerability_gap', asc: false };
 
         function ctFmtDate(iso) {
             if (!iso) return '?';
@@ -5936,8 +5945,9 @@
                 updateProgress(1);
                 await tick();
                 renderCtSummary();
-                ctOppPage = 1;
-                ctContPage = 1;
+                ctPage.opp = 1;
+                ctPage.cont = 1;
+                ctPage.vuln = 1;
                 renderCtOpportunities();
                 renderCtContenders();
 
@@ -6033,7 +6043,8 @@
 
             const total = sorted.length;
             const totalPages = Math.ceil(total / CT_PAGE_SIZE);
-            const start = (ctOppPage - 1) * CT_PAGE_SIZE;
+            if (ctPage.opp > totalPages) ctPage.opp = totalPages;
+            const start = (ctPage.opp - 1) * CT_PAGE_SIZE;
             const page = sorted.slice(start, start + CT_PAGE_SIZE);
             const agg = ctData.aggregator;
 
@@ -6067,7 +6078,7 @@
             });
 
             html += '</tbody></table>';
-            html += renderCtPagination(total, totalPages, ctOppPage, 'ctOppPage', 'renderCtOpportunities');
+            html += renderCtPagination(total, totalPages, ctPage.opp, 'opp', 'renderCtOpportunities');
             container.innerHTML = html;
         }
 
@@ -6089,7 +6100,8 @@
 
             const total = sorted.length;
             const totalPages = Math.ceil(total / CT_PAGE_SIZE);
-            const start = (ctContPage - 1) * CT_PAGE_SIZE;
+            if (ctPage.cont > totalPages) ctPage.cont = totalPages;
+            const start = (ctPage.cont - 1) * CT_PAGE_SIZE;
             const page = sorted.slice(start, start + CT_PAGE_SIZE);
             const agg = ctData.aggregator;
 
@@ -6134,7 +6146,7 @@
             });
 
             html += '</tbody></table>';
-            html += renderCtPagination(total, totalPages, ctContPage, 'ctContPage', 'renderCtContenders');
+            html += renderCtPagination(total, totalPages, ctPage.cont, 'cont', 'renderCtContenders');
             container.innerHTML = html;
         }
 
@@ -6237,12 +6249,31 @@
                 container.innerHTML = '<div class="ct-no-data">No vulnerabilities found — ' + esc(agg) + ' is not being out-scored on any FI where it is currently primary.</div>';
                 return;
             }
+            const sorted = [...items].sort((a, b) => {
+                let va = a[ctVulnSort.field], vb = b[ctVulnSort.field];
+                if (va == null) va = ctVulnSort.asc ? Infinity : -Infinity;
+                if (vb == null) vb = ctVulnSort.asc ? Infinity : -Infinity;
+                if (typeof va === 'string') return ctVulnSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                return ctVulnSort.asc ? va - vb : vb - va;
+            });
+            const total = sorted.length;
+            const totalPages = Math.ceil(total / CT_PAGE_SIZE);
+            if (ctPage.vuln > totalPages) ctPage.vuln = totalPages;
+            const start = (ctPage.vuln - 1) * CT_PAGE_SIZE;
+            const page = sorted.slice(start, start + CT_PAGE_SIZE);
+
+            const arrow = (f) => ctVulnSort.field === f ? (ctVulnSort.asc ? ' \u25B2' : ' \u25BC') : '';
             let html = '<table class="ct-table"><thead><tr>';
-            html += '<th>#</th><th>Institution</th><th>' + esc(agg) + ' Score</th><th>Threat Provider</th><th>Threat Score</th><th>Gap</th>';
+            html += `<th onclick="sortCtVuln('rank')"># ${arrow('rank')}</th>`;
+            html += `<th onclick="sortCtVuln('institution_name')">Institution${arrow('institution_name')}</th>`;
+            html += `<th onclick="sortCtVuln('aggregator_score')">${esc(agg)} Score${arrow('aggregator_score')}</th>`;
+            html += `<th onclick="sortCtVuln('threat_provider')">Threat Provider${arrow('threat_provider')}</th>`;
+            html += `<th onclick="sortCtVuln('threat_score')">Threat Score${arrow('threat_score')}</th>`;
+            html += `<th onclick="sortCtVuln('vulnerability_gap')">Gap${arrow('vulnerability_gap')}</th>`;
             html += '</tr></thead><tbody>';
-            items.forEach((v, i) => {
+            page.forEach((v, i) => {
                 html += '<tr>';
-                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${i + 1}</td>`;
+                html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
                 html += ctClickableName(v.institution_name);
                 html += `<td><span class="ct-score ${ctScoreCls(v.aggregator_score)}">${ctFmtScore(v.aggregator_score)}</span></td>`;
                 html += `<td>${providerBadge(v.threat_provider)}</td>`;
@@ -6251,7 +6282,19 @@
                 html += '</tr>';
             });
             html += '</tbody></table>';
+            html += renderCtPagination(total, totalPages, ctPage.vuln, 'vuln', 'renderCtVulnerabilities');
             container.innerHTML = html;
+        }
+
+        function sortCtVuln(field) {
+            if (ctVulnSort.field === field) {
+                ctVulnSort.asc = !ctVulnSort.asc;
+            } else {
+                ctVulnSort.field = field;
+                ctVulnSort.asc = field === 'rank' || field === 'institution_name';
+            }
+            ctPage.vuln = 1;
+            renderCtVulnerabilities();
         }
 
         function sortCtOpp(field) {
@@ -6261,7 +6304,7 @@
                 ctOppSort.field = field;
                 ctOppSort.asc = field === 'rank' || field === 'institution_name';
             }
-            ctOppPage = 1;
+            ctPage.opp = 1;
             renderCtOpportunities();
         }
 
@@ -6272,12 +6315,12 @@
                 ctContSort.field = field;
                 ctContSort.asc = field === 'rank' || field === 'institution_name';
             }
-            ctContPage = 1;
+            ctPage.cont = 1;
             renderCtContenders();
         }
 
-        function ctGoToPage(varName, renderFn, page) {
-            window[varName] = page;
+        function ctGoToPage(key, renderFn, page) {
+            ctPage[key] = page;
             window[renderFn]();
         }
 
@@ -6500,15 +6543,15 @@
             w.document.close();
         }
 
-        function renderCtPagination(total, totalPages, currentPg, pageVar, renderFn) {
+        function renderCtPagination(total, totalPages, currentPg, pageKey, renderFn) {
             if (totalPages <= 1) return `<div class="ct-pagination"><span>Showing all ${total} items</span></div>`;
             const start = (currentPg - 1) * CT_PAGE_SIZE + 1;
             const end = Math.min(currentPg * CT_PAGE_SIZE, total);
             return `<div class="ct-pagination">
                 <span>Showing ${start}–${end} of ${total}</span>
                 <div>
-                    <button onclick="ctGoToPage('${pageVar}','${renderFn}',${currentPg - 1})" ${currentPg <= 1 ? 'disabled' : ''}>&lsaquo; Prev</button>
-                    <button onclick="ctGoToPage('${pageVar}','${renderFn}',${currentPg + 1})" ${currentPg >= totalPages ? 'disabled' : ''}>Next &rsaquo;</button>
+                    <button onclick="ctGoToPage('${pageKey}','${renderFn}',${currentPg - 1})" ${currentPg <= 1 ? 'disabled' : ''}>&lsaquo; Prev</button>
+                    <button onclick="ctGoToPage('${pageKey}','${renderFn}',${currentPg + 1})" ${currentPg >= totalPages ? 'disabled' : ''}>Next &rsaquo;</button>
                 </div>
             </div>`;
         }
