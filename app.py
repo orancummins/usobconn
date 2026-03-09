@@ -29,7 +29,27 @@ logging.basicConfig(
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 MIN_SESSION_FIS = 5000  # Ignore sessions with fewer than this many institutions
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///monarch.db"
+# ensure the instance folder exists so we can place the database there
+os.makedirs(app.instance_path, exist_ok=True)
+
+# store the sqlite file inside the instance directory instead of relying on
+# the current working directory.  the previous relative URI meant launching
+# the app from a different folder (e.g. via the IDE) created/migrated an
+# unrelated empty file at the project root, which caused the UI to break.
+db_file = os.path.join(app.instance_path, "monarch.db")
+
+# remove any bogus database left at project root (created during previous
+# runs when the cwd was wrong).  it's harmless but confusing, and
+# SQLAlchemy would happily keep writing to it if the working directory
+# ever changed again.
+root_db = os.path.join(os.getcwd(), "monarch.db")
+if root_db != db_file and os.path.exists(root_db) and os.path.getsize(root_db) == 0:
+    try:
+        os.remove(root_db)
+    except Exception:
+        pass
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
@@ -74,6 +94,10 @@ with app.app_context():
     if "connection_status" not in _conn_cols:
         with db.engine.begin() as _c:
             _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN connection_status VARCHAR(50)"))
+    if "institution_type" not in _conn_cols:
+        with db.engine.begin() as _c:
+            _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN institution_type TEXT NOT NULL DEFAULT 'UnMatched'"))
+
     # Clean up any stale sessions from previous crashes
     stale = ScrapeSession.query.filter(
         ScrapeSession.status.in_(["starting", "running"])
@@ -1053,6 +1077,7 @@ def competitive_trends():
         entry = {
             "institution_name": c.institution_name,
             "rank": c.rank,
+            "institution_type": c.institution_type or "UnMatched",
             "is_primary": is_primary,
             "primary_provider": c.data_provider,
             "aggregator_score": agg_score,
@@ -1112,11 +1137,15 @@ def competitive_trends():
         )
         if changes >= 2:
             providers_seen = list({h["provider"] for h in history})
+            # Look up institution_type from the latest session
+            _latest_conn = by_session.get(latest.id, {}).get(fi_name)
+            _inst_type = _latest_conn.institution_type if _latest_conn and hasattr(_latest_conn, 'institution_type') else "UnMatched"
             switchers_list.append({
                 "name": fi_name,
                 "switch_count": changes,
                 "providers_seen": providers_seen,
                 "current_provider": history[-1]["provider"],
+                "institution_type": _inst_type or "UnMatched",
                 "history": history,
             })
 
@@ -1144,6 +1173,7 @@ def competitive_trends():
                     entry = {
                         "institution_name": fi_name,
                         "rank": cc.rank,
+                        "institution_type": cc.institution_type or "UnMatched",
                         "current_score": curr_w,
                         "previous_score": prev_w,
                         "delta": delta,
