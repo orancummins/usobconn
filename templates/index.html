@@ -2317,6 +2317,7 @@
                             <tr>
                                 <th onclick="sortTable('institution_name')">Institution</th>
                                 <th onclick="sortTable('data_provider')">Provider</th>
+                                <th onclick="sortTable('institution_type')">Type</th>
                                 <th onclick="sortTable('success_pct')">Success</th>
                                 <th onclick="sortTable('longevity_pct')">Longevity</th>
                                 <th onclick="sortTable('update_pct')">Updates</th>
@@ -4036,6 +4037,7 @@
                 <tr class="expandable" onclick="toggleDetail('${rid}', this)">
                     <td class="inst-name"><div class="inst-name-wrap"><img class="fi-logo" src="${BASE}/api/logo/${encodeURIComponent(c.institution_name)}" onerror="this.outerHTML='<span class=\\'fi-logo-placeholder\\'>${esc(c.institution_name).charAt(0).toUpperCase()}</span>'" loading="lazy">${esc(c.institution_name)}</div></td>
                     <td>${providerBadge(c.data_provider)}</td>
+                    <td>${esc(c.institution_type || 'UnMatched')}</td>
                     <td class="metric-cell">${metricCell(c.success_pct)}</td>
                     <td class="metric-cell">${metricCell(c.longevity_pct)}</td>
                     <td class="metric-cell">${metricCell(c.update_pct)}</td>
@@ -4043,7 +4045,7 @@
                     <td class="info-cell"><button class="info-btn" title="View history" onclick="event.stopPropagation(); showFiHistory('${escapedName}')">i</button></td>
                 </tr>
                 <tr class="detail-row" id="${rid}" style="display:none;">
-                    <td colspan="7">
+                    <td colspan="8">
                         ${buildDetailPanel(c)}
                     </td>
                 </tr>`;
@@ -4953,6 +4955,9 @@
                     <div style="margin-top:12px;font-size:0.82rem;color:var(--text-dim);">
                         Rank #${c.rank} &middot; ${providerDetails.length} provider${providerDetails.length > 1 ? 's' : ''}
                     </div>
+                    <div style="margin-top:6px;font-size:0.82rem;color:var(--text-dim);">
+                        Type: ${esc(c.institution_type || 'UnMatched')}
+                    </div>
                 </div>`;
 
             const provCards = providerDetails.map((pd, i) => {
@@ -5005,7 +5010,7 @@
             } else {
                 filteredConnections = currentConnections.filter(c => {
                     const text = [
-                        c.institution_name, c.data_provider,
+                        c.institution_name, c.data_provider, c.institution_type,
                         c.connection_status
                     ].filter(Boolean).join(' ').toLowerCase();
                     return text.includes(q);
@@ -5075,7 +5080,7 @@
                 const span = document.createElement('span');
                 const provClass = (fi.prov || 'unknown').toLowerCase();
                 span.className = 'fi-feed-name ' + provClass;
-                span.textContent = fi.name;
+                span.textContent = fi.name + (fi.type ? ` (${fi.type})` : '');
                 feed.prepend(span);
             }
             // Trim oldest items from the end
@@ -5865,6 +5870,7 @@
         let ctData = null;
         let ctDataLoaded = false;
         let ctSessionsPopulated = false;
+        var ctOppPage = 1, ctContPage = 1;
         const CT_PAGE_SIZE = 50;
         const ctPage = { opp: 1, cont: 1, vuln: 1 };
         let ctOppSort = { field: 'score_gap', asc: false };
@@ -6053,6 +6059,7 @@
             let html = '<table class="ct-table"><thead><tr>';
             html += `<th onclick="sortCtOpp('rank')"># ${arrow('rank')}</th>`;
             html += `<th onclick="sortCtOpp('institution_name')">Institution${arrow('institution_name')}</th>`;
+            html += `<th onclick="sortCtOpp('institution_type')">Type${arrow('institution_type')}</th>`;
             html += `<th onclick="sortCtOpp('primary_provider')">Current Primary${arrow('primary_provider')}</th>`;
             html += `<th onclick="sortCtOpp('primary_score')">Primary Score${arrow('primary_score')}</th>`;
             html += `<th onclick="sortCtOpp('aggregator_score')">${esc(agg)} Score${arrow('aggregator_score')}</th>`;
@@ -6065,6 +6072,7 @@
                 html += '<tr>';
                 html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
                 html += ctClickableName(o.institution_name);
+                html += `<td>${esc(o.institution_type || 'UnMatched')}</td>`;
                 html += `<td>${providerBadge(o.primary_provider)}</td>`;
                 html += `<td><span class="ct-score ${ctScoreCls(o.primary_score)}">${ctFmtScore(o.primary_score)}</span></td>`;
                 html += `<td><span class="ct-score ${ctScoreCls(o.aggregator_score)}">${ctFmtScore(o.aggregator_score)}</span></td>`;
@@ -6110,6 +6118,7 @@
             let html = '<table class="ct-table"><thead><tr>';
             html += `<th onclick="sortCtCont('rank')">#${arrow('rank')}</th>`;
             html += `<th onclick="sortCtCont('institution_name')">Institution${arrow('institution_name')}</th>`;
+            html += `<th onclick="sortCtCont('institution_type')">Type${arrow('institution_type')}</th>`;
             html += `<th onclick="sortCtCont('primary_provider')">Current Primary${arrow('primary_provider')}</th>`;
             html += `<th onclick="sortCtCont('primary_score')">Primary Score${arrow('primary_score')}</th>`;
             html += `<th onclick="sortCtCont('aggregator_score')">${esc(agg)} Score${arrow('aggregator_score')}</th>`;
@@ -6132,6 +6141,7 @@
                 html += '<tr>';
                 html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${start + i + 1}</td>`;
                 html += ctClickableName(o.institution_name);
+                html += `<td>${esc(o.institution_type || 'UnMatched')}</td>`;
                 html += `<td>${providerBadge(o.primary_provider)}</td>`;
                 html += `<td><span class="ct-score ${ctScoreCls(o.primary_score)}">${ctFmtScore(o.primary_score)}</span></td>`;
                 html += `<td><span class="ct-score ${ctScoreCls(o.aggregator_score)}">${ctFmtScore(o.aggregator_score)}</span></td>`;
@@ -6160,6 +6170,7 @@
 
             let html = '<table class="ct-table"><thead><tr>';
             html += '<th>Institution</th>';
+            html += '<th>Type</th>';
             html += '<th>Switches</th>';
             html += '<th>Current Provider</th>';
             html += '<th>Providers Seen</th>';
@@ -6169,6 +6180,7 @@
             items.forEach(s => {
                 html += '<tr>';
                 html += ctClickableName(s.name);
+                html += `<td>${esc(s.institution_type || 'UnMatched')}</td>`;
                 html += `<td><span class="ct-switch-badge">${s.switch_count}x</span></td>`;
                 html += `<td>${providerBadge(s.current_provider)}</td>`;
                 html += '<td>' + s.providers_seen.map(p => providerBadge(p)).join(' ') + '</td>';
@@ -6203,12 +6215,13 @@
             } else {
                 let html = '<p style="font-size:0.8rem;color:var(--text-dim);margin:0 0 10px">Comparing <strong style="color:var(--text)">' + esc(compDate) + '</strong> &rarr; <strong style="color:var(--text)">' + esc(sessDate) + '</strong></p>';
                 html += '<table class="ct-table"><thead><tr>';
-                html += '<th>#</th><th>Institution</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
+                html += '<th>#</th><th>Institution</th><th>Type</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
                 html += '</tr></thead><tbody>';
                 upItems.forEach((t, i) => {
                     html += '<tr>';
                     html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${i + 1}</td>`;
                     html += ctClickableName(t.institution_name);
+                    html += `<td>${esc(t.institution_type || 'UnMatched')}</td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.previous_score)}">${ctFmtScore(t.previous_score)}</span></td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.current_score)}">${ctFmtScore(t.current_score)}</span></td>`;
                     html += `<td><span class="ct-delta up">\u25B2 +${t.delta.toFixed(1)}</span></td>`;
@@ -6225,12 +6238,13 @@
                 downContainer.innerHTML = '<div class="ct-no-data">No FIs trending down for ' + esc(agg) + ' between selected sessions.</div>';
             } else {
                 let html = '<table class="ct-table"><thead><tr>';
-                html += '<th>#</th><th>Institution</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
+                html += '<th>#</th><th>Institution</th><th>Type</th><th>Previous Score</th><th>Current Score</th><th>Change</th>';
                 html += '</tr></thead><tbody>';
                 downItems.forEach((t, i) => {
                     html += '<tr>';
                     html += `<td style="color:var(--text-dim);font-weight:600;width:50px">${i + 1}</td>`;
                     html += ctClickableName(t.institution_name);
+                    html += `<td>${esc(t.institution_type || 'UnMatched')}</td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.previous_score)}">${ctFmtScore(t.previous_score)}</span></td>`;
                     html += `<td><span class="ct-score ${ctScoreCls(t.current_score)}">${ctFmtScore(t.current_score)}</span></td>`;
                     html += `<td><span class="ct-delta down">\u25BC ${t.delta.toFixed(1)}</span></td>`;

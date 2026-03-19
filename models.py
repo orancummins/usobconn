@@ -63,6 +63,11 @@ class Connection(db.Model):
     )  # "OK", "Issues reported", "Unavailable"
     status_detail = db.Column(db.Text, nullable=True)  # e.g. "Crypto accounts are not supported."
 
+    # classification based on Mastercard Open Finance attributes
+    institution_type = db.Column(
+        db.String(20), nullable=False, default="UnMatched"
+    )  # OAuth | Legacy | UnMatched
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -78,4 +83,5 @@ class Connection(db.Model):
             "update_pct": self.update_pct,
             "connection_status": self.connection_status,
             "status_detail": self.status_detail,
+            "institution_type": self.institution_type,
         }
