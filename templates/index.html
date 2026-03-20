@@ -2393,6 +2393,11 @@
                 <!-- Opportunities -->
                 <div id="ct-opportunities" class="ct-sub-view active">
                     <div class="ct-section">
+                        <h3>&#x1F4CA; Opportunities Overview</h3>
+                        <p class="ct-subtitle">Top opportunities by score gap — how much the selected aggregator outperforms the current primary provider</p>
+                        <div id="ct-opp-chart-wrap" style="position:relative;width:100%;max-height:520px;margin-bottom:20px;display:none;"><canvas id="ct-opp-chart"></canvas></div>
+                    </div>
+                    <div class="ct-section">
                         <h3>&#x1F3AF; Top Opportunities</h3>
                         <p class="ct-subtitle">FIs where the selected aggregator scores higher than the current primary provider — ranked by score gap and institution importance</p>
                         <div id="ct-opp-table"></div>
@@ -4127,7 +4132,8 @@
             content.innerHTML = '<div class="fi-modal-loading">Loading history&hellip;</div>';
 
             try {
-                const res = await fetch(`${BASE}/api/institutions/${encodeURIComponent(institutionName)}/history`);
+                const res = await fetch(`${BASE}/api/institution-history?name=${encodeURIComponent(institutionName)}`);
+                if (!res.ok) throw new Error(`Server returned ${res.status}`);
                 const data = await res.json();
 
                 if (!data.history || data.history.length === 0) {
@@ -5868,6 +5874,7 @@
         const CT_PAGE_SIZE = 50;
         const ctPage = { opp: 1, cont: 1, vuln: 1 };
         let ctOppSort = { field: 'score_gap', asc: false };
+        let ctOppChartInstance = null;
         let ctContSort = { field: 'rank', asc: true };
         let ctVulnSort = { field: 'vulnerability_gap', asc: false };
 
@@ -6025,7 +6032,87 @@
             `;
         }
 
+        function renderCtOppChart() {
+            const opps = ctData.opportunities || [];
+            const wrap = document.getElementById('ct-opp-chart-wrap');
+            if (opps.length === 0) { wrap.style.display = 'none'; return; }
+
+            const top = opps.slice(0, 25);
+            const labels = top.map(o => o.institution_name.length > 30 ? o.institution_name.slice(0, 28) + '…' : o.institution_name);
+            const gaps = top.map(o => o.score_gap || 0);
+            const aggScores = top.map(o => o.aggregator_score || 0);
+            const priScores = top.map(o => o.primary_score || 0);
+            const provColors = {'Plaid': '#5dade2', 'Finicity': '#2d8659', 'MX': '#F79E1B', 'Unknown': '#555'};
+            const agg = ctData.aggregator;
+            const barColors = top.map(o => provColors[o.primary_provider] || '#555');
+
+            wrap.style.display = '';
+            const h = Math.max(320, top.length * 26 + 60);
+            wrap.style.height = h + 'px';
+
+            if (ctOppChartInstance) { ctOppChartInstance.destroy(); ctOppChartInstance = null; }
+
+            const ctx = document.getElementById('ct-opp-chart').getContext('2d');
+            ctOppChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: agg + ' Score',
+                            data: aggScores,
+                            backgroundColor: provColors[agg] || '#a78bfa',
+                            borderRadius: 3,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.85,
+                        },
+                        {
+                            label: 'Current Primary Score',
+                            data: priScores,
+                            backgroundColor: barColors,
+                            borderRadius: 3,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.85,
+                        },
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#c5c8d4', font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(items) {
+                                    const idx = items[0].dataIndex;
+                                    const o = top[idx];
+                                    return 'Gap: +' + (o.score_gap || 0).toFixed(1) + '  |  Primary: ' + (o.primary_provider || '?');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'Weighted Score (%)', color: '#8b8fa3' },
+                            ticks: { color: '#8b8fa3' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                        },
+                        y: {
+                            ticks: { color: '#c5c8d4', font: { size: 11 } },
+                            grid: { display: false },
+                        }
+                    }
+                }
+            });
+        }
+
         function renderCtOpportunities() {
+            renderCtOppChart();
             const opps = ctData.opportunities || [];
             const container = document.getElementById('ct-opp-table');
             if (opps.length === 0) {

@@ -703,9 +703,10 @@ def get_score_changes():
     return jsonify(results)
 
 
-@app.route("/api/institutions/<path:name>/history")
+@app.route("/api/institution-history")
 @login_required
-def get_institution_history(name):
+def get_institution_history():
+    name = request.args.get("name", "")
     """Return metric history for a specific institution across all completed scrapes."""
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
