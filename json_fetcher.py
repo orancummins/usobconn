@@ -19,7 +19,7 @@ import ssl
 import urllib.request
 from datetime import datetime, timezone
 
-from models import Connection, ScrapeSession, db
+from models import Connection, SessionSummary, ScrapeSession, db
 
 log = logging.getLogger(__name__)
 
@@ -262,6 +262,9 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
             session.finished_at = datetime.now(timezone.utc)
             db.session.commit()
 
+            # Compute and store per-provider summary aggregates
+            _build_session_summaries(session_id)
+
         emit(
             "complete",
             {
@@ -283,3 +286,65 @@ def fetch_json_connections(app, progress_callback=None, session_id=None):
 
         emit("error", {"message": f"Retrieval failed: {str(e)}"})
         raise
+
+
+def _build_session_summaries(session_id):
+    """Compute per-provider aggregate metrics and store as SessionSummary rows.
+
+    Called once at the end of a successful scrape so that history/stats
+    endpoints can read pre-computed data instead of scanning all Connection rows.
+    """
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+
+    # Use SQL-level aggregation where possible
+    from sqlalchemy import func, case
+
+    rows = (
+        db.session.query(
+            Connection.data_provider,
+            func.count().label("cnt"),
+            func.avg(Connection.success_pct).label("avg_s"),
+            func.avg(Connection.longevity_pct).label("avg_l"),
+            func.avg(Connection.update_pct).label("avg_u"),
+            func.sum(case((Connection.connection_status == "Issues reported", 1), else_=0)).label("issues"),
+            func.sum(case((Connection.connection_status == "Unavailable", 1), else_=0)).label("unavail"),
+            func.sum(case((Connection.connection_status == "OK", 1), else_=0)).label("ok"),
+        )
+        .filter(Connection.scrape_session_id == session_id)
+        .group_by(Connection.data_provider)
+        .all()
+    )
+
+    # Delete any existing summaries for this session (idempotent re-runs)
+    SessionSummary.query.filter_by(scrape_session_id=session_id).delete()
+
+    for row in rows:
+        prov = row.data_provider or "Unknown"
+        avg_s = round(row.avg_s, 2) if row.avg_s is not None else None
+        avg_l = round(row.avg_l, 2) if row.avg_l is not None else None
+        avg_u = round(row.avg_u, 2) if row.avg_u is not None else None
+
+        parts, weights = [], []
+        if avg_s is not None:
+            parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
+        if avg_l is not None:
+            parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
+        if avg_u is not None:
+            parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
+        w_avg = round(sum(parts) / sum(weights), 2) if weights else None
+
+        db.session.add(SessionSummary(
+            scrape_session_id=session_id,
+            provider=prov,
+            count=row.cnt,
+            avg_success=avg_s,
+            avg_longevity=avg_l,
+            avg_update=avg_u,
+            weighted_avg=w_avg,
+            issues_count=row.issues or 0,
+            unavailable_count=row.unavail or 0,
+            ok_count=row.ok or 0,
+        ))
+
+    db.session.commit()
+    log.info("Built session summaries for session %d (%d providers)", session_id, len(rows))

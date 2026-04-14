@@ -2609,6 +2609,11 @@
         let currentSessionId = null;
         let currentPage = 1;
         let pageSize = 50;
+        let tableTotalItems = 0;
+        let tableTotalPages = 1;
+        let tablePageData = [];       // current page of connections from server
+        let tableSearchQuery = '';     // current search filter for server-side search
+        let tableFetchController = null; // AbortController for in-flight table fetches
 
         // Initialize - check for active retrieval, then load sessions
         checkActiveRetrieval();
@@ -2700,7 +2705,7 @@
                 updateProgress(0);
                 await tick();
                 const [connRes, statsRes] = await Promise.all([
-                    fetch(`${BASE}/api/sessions/${sessionId}/connections`),
+                    fetch(`${BASE}/api/sessions/${sessionId}/connections?all=1`),
                     fetch(`${BASE}/api/sessions/${sessionId}/stats`)
                 ]);
                 const connData = await connRes.json();
@@ -2709,6 +2714,7 @@
                 currentConnections = connData.connections || [];
                 filteredConnections = null;
                 currentPage = 1;
+                tableSearchQuery = '';
 
                 // Clear any active search
                 const searchInput = document.querySelector('.search-input');
@@ -4014,27 +4020,39 @@
             return filteredConnections !== null ? filteredConnections : currentConnections;
         }
 
-        function renderTable() {
-            const tbody = document.getElementById('connections-tbody');
-            const source = getDisplayConnections();
-            const sorted = [...source].sort((a, b) => {
-                let va = a[sortField], vb = b[sortField];
-                if (va == null) va = sortAsc ? Infinity : -Infinity;
-                if (vb == null) vb = sortAsc ? Infinity : -Infinity;
-                if (typeof va === 'string') {
-                    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-                }
-                return sortAsc ? va - vb : vb - va;
+        async function fetchTablePage() {
+            if (!currentSessionId) return;
+            // Cancel any in-flight fetch
+            if (tableFetchController) tableFetchController.abort();
+            tableFetchController = new AbortController();
+            const params = new URLSearchParams({
+                page: currentPage,
+                page_size: pageSize,
+                sort: sortField,
+                sort_dir: sortAsc ? 'asc' : 'desc',
             });
+            if (tableSearchQuery) params.set('search', tableSearchQuery);
+            try {
+                const res = await fetch(
+                    `${BASE}/api/sessions/${currentSessionId}/connections?${params}`,
+                    { signal: tableFetchController.signal }
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                tablePageData = data.connections || [];
+                tableTotalItems = data.total || 0;
+                tableTotalPages = data.total_pages || 1;
+                if (currentPage > tableTotalPages) currentPage = tableTotalPages;
+                renderTableFromPage();
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error('Table fetch failed:', e);
+            }
+        }
 
-            const totalItems = sorted.length;
-            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-            if (currentPage > totalPages) currentPage = totalPages;
+        function renderTableFromPage() {
+            const tbody = document.getElementById('connections-tbody');
             const start = (currentPage - 1) * pageSize;
-            const end = Math.min(start + pageSize, totalItems);
-            const pageItems = sorted.slice(start, end);
-
-            tbody.innerHTML = pageItems.map((c, i) => {
+            tbody.innerHTML = tablePageData.map((c, i) => {
                 const rid = `detail-${start + i}`;
                 const escapedName = esc(c.institution_name).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
                 return `
@@ -4053,8 +4071,12 @@
                     </td>
                 </tr>`;
             }).join('');
+            renderPagination(tableTotalItems, tableTotalPages);
+        }
 
-            renderPagination(totalItems, totalPages);
+        function renderTable() {
+            // Server-side pagination: fetch the current page from the API
+            fetchTablePage();
         }
 
         function renderPagination(totalItems, totalPages) {
@@ -4104,10 +4126,8 @@
         }
 
         function goToPage(page) {
-            const source = getDisplayConnections();
-            const totalPages = Math.max(1, Math.ceil(source.length / pageSize));
-            currentPage = Math.max(1, Math.min(page, totalPages));
-            renderTable();
+            currentPage = Math.max(1, Math.min(page, tableTotalPages));
+            fetchTablePage();
             // Scroll table into view
             document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -4117,7 +4137,7 @@
             const firstVisibleIdx = (currentPage - 1) * pageSize;
             pageSize = newSize;
             currentPage = Math.floor(firstVisibleIdx / pageSize) + 1;
-            renderTable();
+            fetchTablePage();
         }
 
         // --- FI History Modal ---
@@ -5000,25 +5020,17 @@
                 sortAsc = true;
             }
             currentPage = 1;
-            renderTable();
+            fetchTablePage();
         }
 
+        let _filterDebounce = null;
         function filterTable(query) {
-            const q = query.toLowerCase().trim();
-            const btn = document.getElementById('retrieve-btn');
-            if (!q) {
-                filteredConnections = null;
-            } else {
-                filteredConnections = currentConnections.filter(c => {
-                    const text = [
-                        c.institution_name, c.data_provider,
-                        c.connection_status
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    return text.includes(q);
-                });
-            }
-            currentPage = 1;
-            renderTable();
+            clearTimeout(_filterDebounce);
+            _filterDebounce = setTimeout(() => {
+                tableSearchQuery = query.trim();
+                currentPage = 1;
+                fetchTablePage();
+            }, 250);
         }
 
         function providerBadge(prov) {

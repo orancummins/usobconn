@@ -12,7 +12,7 @@ import urllib.request
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, session, url_for
 
-from models import Connection, ScrapeSession, db
+from models import Connection, SessionSummary, ScrapeSession, db
 from scheduler import start_scheduler
 from json_fetcher import fetch_json_connections
 
@@ -74,6 +74,31 @@ with app.app_context():
     if "connection_status" not in _conn_cols:
         with db.engine.begin() as _c:
             _c.execute(_sa_text("ALTER TABLE connections ADD COLUMN connection_status VARCHAR(50)"))
+
+    # Ensure indexes exist on older databases
+    _existing_indexes = {idx["name"] for idx in _insp.get_indexes("connections")}
+    _needed_indexes = [
+        ("ix_connections_session_id", "CREATE INDEX ix_connections_session_id ON connections (scrape_session_id)"),
+        ("ix_connections_institution_name", "CREATE INDEX ix_connections_institution_name ON connections (institution_name)"),
+        ("ix_connections_session_name", "CREATE INDEX ix_connections_session_name ON connections (scrape_session_id, institution_name)"),
+        ("ix_connections_session_rank", "CREATE INDEX ix_connections_session_rank ON connections (scrape_session_id, rank)"),
+        ("ix_connections_status", "CREATE INDEX ix_connections_status ON connections (connection_status)"),
+    ]
+    for idx_name, idx_sql in _needed_indexes:
+        if idx_name not in _existing_indexes:
+            with db.engine.begin() as _c:
+                _c.execute(_sa_text(idx_sql))
+
+    if "scrape_sessions" in _insp.get_table_names():
+        _sess_indexes = {idx["name"] for idx in _insp.get_indexes("scrape_sessions")}
+        for idx_name, idx_sql in [
+            ("ix_sessions_status", "CREATE INDEX ix_sessions_status ON scrape_sessions (status)"),
+            ("ix_sessions_started_at", "CREATE INDEX ix_sessions_started_at ON scrape_sessions (started_at)"),
+        ]:
+            if idx_name not in _sess_indexes:
+                with db.engine.begin() as _c:
+                    _c.execute(_sa_text(idx_sql))
+
     # Clean up any stale sessions from previous crashes
     stale = ScrapeSession.query.filter(
         ScrapeSession.status.in_(["starting", "running"])
@@ -265,32 +290,157 @@ def get_session(session_id):
 @app.route("/api/sessions/<int:session_id>/connections")
 @login_required
 def get_connections(session_id):
-    """Get all connections for a specific scrape session."""
+    """Get connections for a scrape session with server-side pagination, search, and sort.
+
+    Query params:
+        page (int, default 1)
+        page_size (int, default 50, max 500)
+        search (str, optional) — filter institution_name LIKE %search%
+        sort (str, default 'rank') — column to sort by
+        sort_dir (str, default 'asc') — 'asc' or 'desc'
+        all (bool) — if '1', return all connections (backward compat for pixel map etc.)
+    """
     session = db.session.get(ScrapeSession, session_id)
     if not session:
         return jsonify({"error": "Session not found"}), 404
 
-    connections = (
-        Connection.query.filter_by(scrape_session_id=session_id)
-        .order_by(Connection.rank)
-        .all()
-    )
-    return jsonify(
-        {
+    # Backward compatibility: return all connections when ?all=1
+    return_all = request.args.get("all") == "1"
+
+    query = Connection.query.filter_by(scrape_session_id=session_id)
+
+    # Search filter
+    search = request.args.get("search", "").strip()
+    if search:
+        pattern = f"%{search}%"
+        query = query.filter(
+            db.or_(
+                Connection.institution_name.ilike(pattern),
+                Connection.data_provider.ilike(pattern),
+                Connection.connection_status.ilike(pattern),
+            )
+        )
+
+    # Sorting
+    ALLOWED_SORT = {
+        "rank", "institution_name", "data_provider",
+        "success_pct", "longevity_pct", "update_pct", "connection_status",
+    }
+    sort_field = request.args.get("sort", "rank")
+    if sort_field not in ALLOWED_SORT:
+        sort_field = "rank"
+    sort_dir = request.args.get("sort_dir", "asc")
+    sort_col = getattr(Connection, sort_field, Connection.rank)
+    if sort_dir == "desc":
+        query = query.order_by(sort_col.desc())
+    else:
+        query = query.order_by(sort_col.asc())
+
+    if return_all:
+        connections = query.all()
+        return jsonify({
             "session": session.to_dict(),
             "connections": [c.to_dict() for c in connections],
-        }
-    )
+        })
+
+    # Paginated response
+    page = max(1, request.args.get("page", 1, type=int))
+    page_size = min(500, max(1, request.args.get("page_size", 50, type=int)))
+
+    total = query.count()
+    connections = query.offset((page - 1) * page_size).limit(page_size).all()
+
+    return jsonify({
+        "session": session.to_dict(),
+        "connections": [c.to_dict() for c in connections],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": max(1, -(-total // page_size)),  # ceil division
+    })
 
 
 @app.route("/api/sessions/<int:session_id>/stats")
 @login_required
 def get_session_stats(session_id):
-    """Get summary statistics for a scrape session."""
+    """Get summary statistics for a scrape session.
+
+    Uses pre-computed SessionSummary when available; falls back to
+    scanning all Connection rows.
+    """
     session = db.session.get(ScrapeSession, session_id)
     if not session:
         return jsonify({"error": "Session not found"}), 404
 
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+
+    # Try fast path: pre-computed summaries
+    summaries = SessionSummary.query.filter_by(scrape_session_id=session_id).all()
+    if summaries:
+        providers = {}
+        statuses = {}
+        provider_scores = {}
+        total_institutions = 0
+
+        for sm in summaries:
+            providers[sm.provider] = sm.count
+            total_institutions += sm.count
+            statuses["OK"] = statuses.get("OK", 0) + sm.ok_count
+            statuses["Issues reported"] = statuses.get("Issues reported", 0) + sm.issues_count
+            statuses["Unavailable"] = statuses.get("Unavailable", 0) + sm.unavailable_count
+
+            provider_scores[sm.provider] = {
+                "avg_success": sm.avg_success,
+                "avg_longevity": sm.avg_longevity,
+                "avg_update": sm.avg_update,
+                "weighted_avg": sm.weighted_avg,
+                "institution_count": sm.count,
+                "success_count": sm.count,
+                "longevity_count": sm.count,
+                "update_count": sm.count,
+                "weights": {
+                    "success": W_SUCCESS,
+                    "longevity": W_LONGEVITY,
+                    "update": W_UPDATE,
+                },
+            }
+
+        # Remove zero-count status entries
+        statuses = {k: v for k, v in statuses.items() if v > 0}
+
+        # Weighted avg success across providers
+        weighted_success_num = 0
+        weighted_success_den = 0
+        provider_success_breakdown = []
+        for prov, ps in provider_scores.items():
+            if ps["avg_success"] is not None and ps["institution_count"] > 0:
+                weighted_success_num += ps["avg_success"] * ps["institution_count"]
+                weighted_success_den += ps["institution_count"]
+                provider_success_breakdown.append({
+                    "provider": prov,
+                    "avg_success": ps["avg_success"],
+                    "fi_count": ps["institution_count"],
+                })
+
+        # Overall averages (weighted by provider FI count)
+        def _overall_avg(attr):
+            num = sum(getattr(sm, attr) * sm.count for sm in summaries if getattr(sm, attr) is not None)
+            den = sum(sm.count for sm in summaries if getattr(sm, attr) is not None)
+            return round(num / den, 2) if den > 0 else None
+
+        return jsonify({
+            "session": session.to_dict(),
+            "total_institutions": total_institutions,
+            "provider_distribution": providers,
+            "status_distribution": statuses,
+            "provider_scores": provider_scores,
+            "avg_success_pct": round(weighted_success_num / weighted_success_den, 2) if weighted_success_den > 0 else None,
+            "provider_success_breakdown": provider_success_breakdown,
+            "avg_longevity_pct": _overall_avg("avg_longevity"),
+            "avg_update_pct": _overall_avg("avg_update"),
+        })
+
+    # Slow fallback — scan Connection rows
     connections = Connection.query.filter_by(scrape_session_id=session_id).all()
 
     # Provider distribution & per-provider weighted averages
@@ -431,6 +581,8 @@ def get_latest_stats():
 def get_history():
     """Return per-provider stats for all completed scrape sessions (newest first).
 
+    Uses pre-computed SessionSummary rows when available (fast path).
+    Falls back to scanning Connection rows for sessions without summaries.
     Optional query param ?decile=0..9 filters to that 10% rank bucket
     (0 = top 10%, 9 = bottom 10%).  Omit for all institutions.
     """
@@ -443,73 +595,113 @@ def get_history():
         .all()
     )
 
-    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+    # When decile filter is used, we must fall back to Connection rows
+    # because summaries are whole-session aggregates.
+    use_summaries = decile is None
+
+    if use_summaries:
+        # Fast path: read pre-computed summaries
+        session_ids = [s.id for s in sessions]
+        all_summaries = (
+            SessionSummary.query
+            .filter(SessionSummary.scrape_session_id.in_(session_ids))
+            .all()
+        ) if session_ids else []
+
+        summaries_by_session: dict[int, list] = {}
+        for sm in all_summaries:
+            summaries_by_session.setdefault(sm.scrape_session_id, []).append(sm)
+
     results = []
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
 
     for sess in sessions:
-        connections = (
-            Connection.query.filter_by(scrape_session_id=sess.id)
-            .order_by(Connection.rank)
-            .all()
-        )
+        if use_summaries and sess.id in summaries_by_session:
+            # Fast path — read from pre-computed summaries
+            sms = summaries_by_session[sess.id]
+            providers = {}
+            total_issues = 0
+            for sm in sms:
+                providers[sm.provider] = {
+                    "success": sm.avg_success,
+                    "longevity": sm.avg_longevity,
+                    "update": sm.avg_update,
+                    "weighted": sm.weighted_avg,
+                    "count": sm.count,
+                    "issues_count": sm.issues_count,
+                }
+                total_issues += sm.issues_count
+            results.append({
+                "session_id": sess.id,
+                "started_at": sess.started_at.isoformat() if sess.started_at else None,
+                "total_institutions": sess.total_institutions or sum(sm.count for sm in sms),
+                "total_issues": total_issues,
+                "providers": providers,
+            })
+        else:
+            # Slow fallback — scan Connection rows (decile filter or no summaries)
+            connections = (
+                Connection.query.filter_by(scrape_session_id=sess.id)
+                .order_by(Connection.rank)
+                .all()
+            )
 
-        # Apply decile filter if requested
-        if decile is not None and 0 <= decile <= 9:
-            n = len(connections)
-            bucket_size = n / 10
-            start = int(decile * bucket_size)
-            end = int((decile + 1) * bucket_size)
-            connections = connections[start:end]
+            if decile is not None and 0 <= decile <= 9:
+                n = len(connections)
+                bucket_size = n / 10
+                start = int(decile * bucket_size)
+                end = int((decile + 1) * bucket_size)
+                connections = connections[start:end]
 
-        provider_metrics: dict[str, dict] = {}
-        provider_counts: dict[str, int] = {}
-        provider_issues: dict[str, int] = {}
+            provider_metrics: dict[str, dict] = {}
+            provider_counts: dict[str, int] = {}
+            provider_issues: dict[str, int] = {}
 
-        for c in connections:
-            prov = c.data_provider or "Unknown"
-            provider_counts[prov] = provider_counts.get(prov, 0) + 1
-            if c.connection_status == "Issues reported":
-                provider_issues[prov] = provider_issues.get(prov, 0) + 1
-            if prov not in provider_metrics:
-                provider_metrics[prov] = {"success": [], "longevity": [], "update": []}
-            if c.success_pct is not None:
-                provider_metrics[prov]["success"].append(c.success_pct)
-            if c.longevity_pct is not None:
-                provider_metrics[prov]["longevity"].append(c.longevity_pct)
-            if c.update_pct is not None:
-                provider_metrics[prov]["update"].append(c.update_pct)
+            for c in connections:
+                prov = c.data_provider or "Unknown"
+                provider_counts[prov] = provider_counts.get(prov, 0) + 1
+                if c.connection_status == "Issues reported":
+                    provider_issues[prov] = provider_issues.get(prov, 0) + 1
+                if prov not in provider_metrics:
+                    provider_metrics[prov] = {"success": [], "longevity": [], "update": []}
+                if c.success_pct is not None:
+                    provider_metrics[prov]["success"].append(c.success_pct)
+                if c.longevity_pct is not None:
+                    provider_metrics[prov]["longevity"].append(c.longevity_pct)
+                if c.update_pct is not None:
+                    provider_metrics[prov]["update"].append(c.update_pct)
 
-        providers = {}
-        for prov, m in provider_metrics.items():
-            avg_s = round(sum(m["success"]) / len(m["success"]), 2) if m["success"] else None
-            avg_l = round(sum(m["longevity"]) / len(m["longevity"]), 2) if m["longevity"] else None
-            avg_u = round(sum(m["update"]) / len(m["update"]), 2) if m["update"] else None
+            providers = {}
+            for prov, m in provider_metrics.items():
+                avg_s = round(sum(m["success"]) / len(m["success"]), 2) if m["success"] else None
+                avg_l = round(sum(m["longevity"]) / len(m["longevity"]), 2) if m["longevity"] else None
+                avg_u = round(sum(m["update"]) / len(m["update"]), 2) if m["update"] else None
 
-            parts, weights = [], []
-            if avg_s is not None:
-                parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
-            if avg_l is not None:
-                parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
-            if avg_u is not None:
-                parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
+                parts, weights = [], []
+                if avg_s is not None:
+                    parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
+                if avg_l is not None:
+                    parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
+                if avg_u is not None:
+                    parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
 
-            providers[prov] = {
-                "success": avg_s,
-                "longevity": avg_l,
-                "update": avg_u,
-                "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
-                "count": provider_counts.get(prov, 0),
-                "issues_count": provider_issues.get(prov, 0),
-            }
+                providers[prov] = {
+                    "success": avg_s,
+                    "longevity": avg_l,
+                    "update": avg_u,
+                    "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
+                    "count": provider_counts.get(prov, 0),
+                    "issues_count": provider_issues.get(prov, 0),
+                }
 
-        total = len(connections) if decile is not None else (sess.total_institutions or len(connections))
-        results.append({
-            "session_id": sess.id,
-            "started_at": sess.started_at.isoformat() if sess.started_at else None,
-            "total_institutions": total,
-            "total_issues": sum(provider_issues.values()),
-            "providers": providers,
-        })
+            total = len(connections) if decile is not None else (sess.total_institutions or len(connections))
+            results.append({
+                "session_id": sess.id,
+                "started_at": sess.started_at.isoformat() if sess.started_at else None,
+                "total_institutions": total,
+                "total_issues": sum(provider_issues.values()),
+                "providers": providers,
+            })
 
     return jsonify(results)
 
@@ -517,7 +709,10 @@ def get_history():
 @app.route("/api/issues-history")
 @login_required
 def get_issues_history():
-    """Return per-provider issues count for each completed session over time."""
+    """Return per-provider issues count for each completed session over time.
+
+    Uses pre-computed SessionSummary when available.
+    """
     try:
         sessions = (
             ScrapeSession.query.filter_by(status="completed")
@@ -526,26 +721,51 @@ def get_issues_history():
             .all()
         )
 
+        # Try fast path: read from summaries
+        session_ids = [s.id for s in sessions]
+        all_summaries = (
+            SessionSummary.query
+            .filter(SessionSummary.scrape_session_id.in_(session_ids))
+            .filter(SessionSummary.issues_count > 0)
+            .all()
+        ) if session_ids else []
+
+        summaries_by_session: dict[int, list] = {}
+        for sm in all_summaries:
+            summaries_by_session.setdefault(sm.scrape_session_id, []).append(sm)
+
         results = []
         for sess in sessions:
-            # Only query the two columns we need — avoids loading all columns
-            # (which can fail if schema migrations haven't run) and is faster.
-            rows = (
-                db.session.query(Connection.data_provider)
-                .filter_by(scrape_session_id=sess.id, connection_status="Issues reported")
-                .all()
-            )
-            provider_issues = {}
-            for (prov,) in rows:
-                p = prov or "Unknown"
-                provider_issues[p] = provider_issues.get(p, 0) + 1
+            if sess.id in summaries_by_session:
+                # Fast path
+                provider_issues = {}
+                for sm in summaries_by_session[sess.id]:
+                    if sm.issues_count > 0:
+                        provider_issues[sm.provider] = sm.issues_count
+                results.append({
+                    "session_id": sess.id,
+                    "date": sess.started_at.isoformat() if sess.started_at else None,
+                    "total_issues": sum(provider_issues.values()),
+                    "providers": provider_issues,
+                })
+            else:
+                # Slow fallback
+                rows = (
+                    db.session.query(Connection.data_provider)
+                    .filter_by(scrape_session_id=sess.id, connection_status="Issues reported")
+                    .all()
+                )
+                provider_issues = {}
+                for (prov,) in rows:
+                    p = prov or "Unknown"
+                    provider_issues[p] = provider_issues.get(p, 0) + 1
 
-            results.append({
-                "session_id": sess.id,
-                "date": sess.started_at.isoformat() if sess.started_at else None,
-                "total_issues": sum(provider_issues.values()),
-                "providers": provider_issues,
-            })
+                results.append({
+                    "session_id": sess.id,
+                    "date": sess.started_at.isoformat() if sess.started_at else None,
+                    "total_issues": sum(provider_issues.values()),
+                    "providers": provider_issues,
+                })
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -572,9 +792,9 @@ def get_logo(name):
 def get_score_changes():
     """Compare consecutive completed sessions and return per-day score-change summaries.
 
+    Loads connections two sessions at a time instead of all at once.
     Optional query param ?decile=0..9 filters to that 10% rank bucket.
     """
-    from collections import defaultdict
 
     decile = request.args.get("decile", type=int)
 
@@ -589,51 +809,50 @@ def get_score_changes():
 
     W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
 
-    def _weighted(c):
+    def _weighted_row(s_pct, l_pct, u_pct):
         parts, weights = [], []
-        if c.success_pct is not None:
-            parts.append(c.success_pct * W_SUCCESS); weights.append(W_SUCCESS)
-        if c.longevity_pct is not None:
-            parts.append(c.longevity_pct * W_LONGEVITY); weights.append(W_LONGEVITY)
-        if c.update_pct is not None:
-            parts.append(c.update_pct * W_UPDATE); weights.append(W_UPDATE)
+        if s_pct is not None:
+            parts.append(s_pct * W_SUCCESS); weights.append(W_SUCCESS)
+        if l_pct is not None:
+            parts.append(l_pct * W_LONGEVITY); weights.append(W_LONGEVITY)
+        if u_pct is not None:
+            parts.append(u_pct * W_UPDATE); weights.append(W_UPDATE)
         return round(sum(parts) / sum(weights), 2) if weights else None
 
-    # Build lookup: session_id -> { institution_name: Connection }
-    session_ids = [s.id for s in sessions]
-    all_conns = (
-        Connection.query
-        .filter(Connection.scrape_session_id.in_(session_ids))
-        .order_by(Connection.rank)
-        .all()
-    )
-
-    # Group by session, then apply optional decile filter
-    from collections import defaultdict as _dd
-    _by_session = _dd(list)
-    for c in all_conns:
-        _by_session[c.scrape_session_id].append(c)
-
-    lookup = defaultdict(dict)
-    for sid, conns in _by_session.items():
+    def _load_session_map(session_id):
+        """Load lightweight tuples for one session, apply decile filter."""
+        rows = (
+            db.session.query(
+                Connection.institution_name,
+                Connection.data_provider,
+                Connection.success_pct,
+                Connection.longevity_pct,
+                Connection.update_pct,
+            )
+            .filter_by(scrape_session_id=session_id)
+            .order_by(Connection.rank)
+            .all()
+        )
         if decile is not None and 0 <= decile <= 9:
-            n = len(conns)
+            n = len(rows)
             bucket_size = n / 10
             start = int(decile * bucket_size)
             end = int((decile + 1) * bucket_size)
-            conns = conns[start:end]
-        for c in conns:
-            lookup[sid][c.institution_name] = c
+            rows = rows[start:end]
+        return {r.institution_name: r for r in rows}
 
     results = []
+    # Cache the previous session map to avoid loading it twice
+    prev_map = _load_session_map(sessions[0].id)
+
     for i in range(1, len(sessions)):
-        prev_sess = sessions[i - 1]
         curr_sess = sessions[i]
-        prev_map = lookup.get(prev_sess.id, {})
-        curr_map = lookup.get(curr_sess.id, {})
+        prev_sess = sessions[i - 1]
+        curr_map = _load_session_map(curr_sess.id)
 
         common = set(prev_map.keys()) & set(curr_map.keys())
         if not common:
+            prev_map = curr_map
             continue
 
         changed_count = 0
@@ -645,8 +864,10 @@ def get_score_changes():
         biggest_declines = []
 
         for name in common:
-            prev_w = _weighted(prev_map[name])
-            curr_w = _weighted(curr_map[name])
+            pr = prev_map[name]
+            cr = curr_map[name]
+            prev_w = _weighted_row(pr.success_pct, pr.longevity_pct, pr.update_pct)
+            curr_w = _weighted_row(cr.success_pct, cr.longevity_pct, cr.update_pct)
             if prev_w is None or curr_w is None:
                 continue
             delta = round(curr_w - prev_w, 2)
@@ -658,13 +879,11 @@ def get_score_changes():
 
             changed_count += 1
             total_abs_change += abs_d
-            curr_prov = curr_map[name].data_provider
-            prev_prov = prev_map[name].data_provider
             entry = {
                 "name": name,
                 "delta": delta,
-                "provider": curr_prov,
-                "prev_provider": prev_prov if prev_prov != curr_prov else None,
+                "provider": cr.data_provider,
+                "prev_provider": pr.data_provider if pr.data_provider != cr.data_provider else None,
             }
             if delta > 0:
                 improved_count += 1
@@ -700,6 +919,8 @@ def get_score_changes():
             "top_declines": biggest_declines[:5],
         })
 
+        prev_map = curr_map
+
     return jsonify(results)
 
 
@@ -715,13 +936,24 @@ def get_institution_history():
         .all()
     )
 
+    session_ids = [s.id for s in sessions]
+    session_map = {s.id: s for s in sessions}
+
+    # Single query using composite index (scrape_session_id, institution_name)
+    conns = (
+        Connection.query
+        .filter(
+            Connection.scrape_session_id.in_(session_ids),
+            Connection.institution_name == name,
+        )
+        .all()
+    ) if session_ids else []
+
+    conn_by_session = {c.scrape_session_id: c for c in conns}
+
     history = []
     for sess in sessions:
-        conn = (
-            Connection.query
-            .filter_by(scrape_session_id=sess.id, institution_name=name)
-            .first()
-        )
+        conn = conn_by_session.get(sess.id)
         if conn:
             history.append({
                 "session_id": sess.id,
@@ -760,12 +992,14 @@ def get_provider_changes(session_id):
         return jsonify({"changes": [], "prev_session_id": None})
 
     cur_conns = {
-        c.institution_name: c.data_provider
-        for c in Connection.query.filter_by(scrape_session_id=session_id).all()
+        r.institution_name: r.data_provider
+        for r in db.session.query(Connection.institution_name, Connection.data_provider)
+        .filter_by(scrape_session_id=session_id).all()
     }
     prev_conns = {
-        c.institution_name: c.data_provider
-        for c in Connection.query.filter_by(scrape_session_id=prev.id).all()
+        r.institution_name: r.data_provider
+        for r in db.session.query(Connection.institution_name, Connection.data_provider)
+        .filter_by(scrape_session_id=prev.id).all()
     }
 
     changes = []
@@ -912,12 +1146,14 @@ def diff_sessions():
         return jsonify({"error": "Session not found"}), 404
 
     conns_a = {
-        c.institution_name: c.data_provider
-        for c in Connection.query.filter_by(scrape_session_id=session_a).all()
+        r.institution_name: r.data_provider
+        for r in db.session.query(Connection.institution_name, Connection.data_provider)
+        .filter_by(scrape_session_id=session_a).all()
     }
     conns_b = {
-        c.institution_name: c.data_provider
-        for c in Connection.query.filter_by(scrape_session_id=session_b).all()
+        r.institution_name: r.data_provider
+        for r in db.session.query(Connection.institution_name, Connection.data_provider)
+        .filter_by(scrape_session_id=session_b).all()
     }
 
     changes = []

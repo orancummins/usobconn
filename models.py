@@ -10,6 +10,10 @@ class ScrapeSession(db.Model):
     """Represents a single scrape run, timestamped for historical tracking."""
 
     __tablename__ = "scrape_sessions"
+    __table_args__ = (
+        db.Index("ix_sessions_status", "status"),
+        db.Index("ix_sessions_started_at", "started_at"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     started_at = db.Column(
@@ -24,6 +28,9 @@ class ScrapeSession(db.Model):
 
     connections = db.relationship(
         "Connection", backref="session", lazy=True, cascade="all, delete-orphan"
+    )
+    summaries = db.relationship(
+        "SessionSummary", backref="session", lazy=True, cascade="all, delete-orphan"
     )
 
     def to_dict(self):
@@ -41,6 +48,13 @@ class Connection(db.Model):
     """Represents a single financial institution's connection status."""
 
     __tablename__ = "connections"
+    __table_args__ = (
+        db.Index("ix_connections_session_id", "scrape_session_id"),
+        db.Index("ix_connections_institution_name", "institution_name"),
+        db.Index("ix_connections_session_name", "scrape_session_id", "institution_name"),
+        db.Index("ix_connections_session_rank", "scrape_session_id", "rank"),
+        db.Index("ix_connections_status", "connection_status"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     scrape_session_id = db.Column(
@@ -78,4 +92,45 @@ class Connection(db.Model):
             "update_pct": self.update_pct,
             "connection_status": self.connection_status,
             "status_detail": self.status_detail,
+        }
+
+
+class SessionSummary(db.Model):
+    """Pre-computed per-session, per-provider aggregate metrics.
+
+    Populated at the end of each scrape to avoid re-scanning all Connection
+    rows for history/stats endpoints.
+    """
+
+    __tablename__ = "session_summaries"
+    __table_args__ = (
+        db.Index("ix_summary_session_id", "scrape_session_id"),
+        db.UniqueConstraint("scrape_session_id", "provider", name="uq_summary_session_provider"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    scrape_session_id = db.Column(
+        db.Integer, db.ForeignKey("scrape_sessions.id"), nullable=False
+    )
+    provider = db.Column(db.String(100), nullable=False)
+    count = db.Column(db.Integer, nullable=False, default=0)
+    avg_success = db.Column(db.Float, nullable=True)
+    avg_longevity = db.Column(db.Float, nullable=True)
+    avg_update = db.Column(db.Float, nullable=True)
+    weighted_avg = db.Column(db.Float, nullable=True)
+    issues_count = db.Column(db.Integer, nullable=False, default=0)
+    unavailable_count = db.Column(db.Integer, nullable=False, default=0)
+    ok_count = db.Column(db.Integer, nullable=False, default=0)
+
+    def to_dict(self):
+        return {
+            "provider": self.provider,
+            "count": self.count,
+            "avg_success": self.avg_success,
+            "avg_longevity": self.avg_longevity,
+            "avg_update": self.avg_update,
+            "weighted_avg": self.weighted_avg,
+            "issues_count": self.issues_count,
+            "unavailable_count": self.unavailable_count,
+            "ok_count": self.ok_count,
         }
