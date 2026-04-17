@@ -1771,6 +1771,477 @@
             margin-bottom: 16px;
         }
 
+        /* --- Top 50 Grid --- */
+        .top50-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .top50-controls .search-input {
+            width: 200px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .top50-controls .search-input:focus {
+            border-color: var(--accent);
+        }
+        .top50-controls .search-input::placeholder { color: var(--text-dim); }
+
+        .top50-prov-pills { display: flex; gap: 4px; }
+        .top50-prov-pill {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .top50-prov-pill.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .top50-prov-pill[data-prov="Plaid"].active    { background: #5dade2; border-color: #5dade2; }
+        .top50-prov-pill[data-prov="Finicity"].active  { background: #2d8659; border-color: #2d8659; }
+        .top50-prov-pill[data-prov="MX"].active        { background: #F79E1B; border-color: #F79E1B; color: #1a1d27; }
+
+        .top50-btn {
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .top50-btn:hover { border-color: var(--accent); color: var(--text); }
+
+        .top50-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+        .top50-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .top50-card:hover {
+            border-color: var(--accent-light);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .top50-card[data-prov="Plaid"]    { border-left-color: #5dade2; }
+        .top50-card[data-prov="Finicity"]  { border-left-color: #2d8659; }
+        .top50-card[data-prov="MX"]        { border-left-color: #F79E1B; }
+
+        .top50-card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0 12px 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .top50-card-row1 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 8px;
+        }
+        .top50-rank {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            background: var(--surface2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 28px;
+            text-align: center;
+        }
+        .top50-name {
+            flex: 1;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .top50-card-row2 {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding-left: 36px;
+        }
+        .top50-prov-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .top50-prov-badge.plaid    { background: #5dade2; }
+        .top50-prov-badge.finicity { background: #2d8659; }
+        .top50-prov-badge.mx       { background: #F79E1B; color: #1a1d27; }
+
+        .top50-score {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .top50-trend {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 2px;
+        }
+        .top50-trend.up   { color: var(--green); }
+        .top50-trend.down { color: var(--red); }
+        .top50-trend.flat { color: var(--text-dim); }
+
+        .top50-card-delta-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 4px 0 0;
+            padding: 5px 10px;
+            background: rgba(46,50,65,0.5);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.7rem;
+        }
+        .top50-delta-label {
+            font-weight: 700;
+            color: var(--text);
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.3px;
+        }
+        .top50-delta-label.dim {
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .top50-delta-val {
+            font-weight: 800;
+            font-size: 0.82rem;
+            color: var(--text);
+        }
+        .top50-delta-val.dim {
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .top50-delta-vs {
+            color: var(--text-dim);
+            font-size: 0.6rem;
+            font-style: italic;
+        }
+        .top50-delta-pip {
+            margin-left: auto;
+            font-weight: 800;
+            font-size: 0.78rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .top50-delta-pip.up {
+            color: var(--green);
+            background: rgba(0,184,148,0.12);
+        }
+        .top50-delta-pip.down {
+            color: var(--red);
+            background: rgba(225,112,85,0.12);
+        }
+        .top50-delta-pip.flat {
+            color: var(--text-dim);
+            background: rgba(139,143,163,0.1);
+        }
+
+        .top50-summary {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .top50-summary-card {
+            flex: 1;
+            min-width: 200px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .top50-summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .top50-summary-card.plaid::before    { background: #5dade2; }
+        .top50-summary-card.finicity::before { background: #2d8659; }
+        .top50-summary-card.mx::before       { background: #F79E1B; }
+        .top50-summary-prov {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .top50-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            font-size: 0.72rem;
+        }
+        .top50-summary-label {
+            color: var(--text-dim);
+        }
+        .top50-summary-val {
+            font-weight: 700;
+            color: var(--text);
+            min-width: 28px;
+            text-align: right;
+        }
+        .top50-summary-val.green { color: var(--green); }
+        .top50-summary-val.amber { color: #e0a030; }
+        .top50-summary-divider {
+            border: none;
+            border-top: 1px dashed var(--border);
+            margin: 6px 0;
+        }
+
+        .top50-sparkline-wrap {
+            padding: 2px 12px 6px;
+            height: 50px;
+            cursor: pointer;
+        }
+        .top50-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 4px;
+        }
+        .top50-status-dot.ok          { background: var(--green); }
+        .top50-status-dot.issues      { background: var(--yellow); }
+        .top50-status-dot.unavailable { background: var(--red); }
+
+        .top50-detail {
+            display: none;
+            padding: 12px 14px 14px;
+            border-top: 1px solid var(--border);
+            animation: slideDown 0.2s ease-out;
+        }
+        .top50-detail-chart { height: 280px; position: relative; }
+        .top50-detail-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .top50-detail-stat {
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+            padding: 6px 8px;
+            background: var(--surface2);
+            border-radius: 8px;
+        }
+        .top50-detail-stat .label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .top50-detail-stat .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 2px;
+        }
+        .top50-empty {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 40px 20px;
+            font-size: 0.9rem;
+        }
+        .top50-conn-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .top50-conn-badge.primary {
+            background: rgba(0,184,148,0.15);
+            color: var(--green);
+            border: 1px solid rgba(0,184,148,0.3);
+        }
+        .top50-conn-badge.secondary {
+            background: rgba(225,160,55,0.12);
+            color: #e0a030;
+            border: 1px dashed rgba(225,160,55,0.5);
+        }
+        .top50-card-type-strip {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 12px;
+            border-radius: 10px 10px 0 0;
+        }
+        .top50-card-type-strip.primary {
+            background: rgba(0,184,148,0.1);
+            color: var(--green);
+        }
+        .top50-card-type-strip.secondary {
+            background: rgba(225,160,55,0.1);
+            color: #e0a030;
+        }
+        .top50-card.secondary {
+            border-left-style: dashed;
+            border-left-color: #e0a030;
+        }
+        .top50-card.secondary:hover { opacity: 1; }
+
+        .top50-delta-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            padding: 8px 10px;
+            background: rgba(46,50,65,0.3);
+            border-radius: 8px;
+            border: 1px dashed var(--border);
+        }
+        .top50-delta-cell {
+            flex: 1;
+            min-width: 70px;
+            text-align: center;
+        }
+        .top50-delta-cell .label {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .top50-delta-cell .delta {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+        .top50-delta-cell .delta.up   { color: var(--green); }
+        .top50-delta-cell .delta.down  { color: var(--red); }
+        .top50-delta-cell .delta.flat  { color: var(--text-dim); }
+
+        .top50-expand-icon {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            transition: transform 0.2s;
+        }
+        .top50-card.expanded .top50-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Not-connected: provider not primary or secondary */
+        .top50-card.not-connected {
+            opacity: 0.35;
+            filter: grayscale(1);
+            border-left-color: #555 !important;
+            pointer-events: none;
+        }
+        .top50-card.not-connected .top50-card-type-strip {
+            background: rgba(100,100,100,0.15);
+            color: #777;
+            border-bottom-color: rgba(100,100,100,0.2);
+        }
+
+        /* Outperforming pulse — white for secondary beating primary */
+        @keyframes top50PulseWhite {
+            0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
+            50%  { box-shadow: 0 0 16px 5px rgba(255,255,255,0.18); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+        /* Outperforming pulse — green for primary beating secondary */
+        @keyframes top50PulseRed {
+            0%   { box-shadow: 0 0 0 0 rgba(0,184,148,0.5); }
+            50%  { box-shadow: 0 0 16px 5px rgba(0,184,148,0.2); }
+            100% { box-shadow: 0 0 0 0 rgba(0,184,148,0); }
+        }
+        @keyframes top50CellFlash {
+            0%   { background: rgba(0,184,148,0.25); }
+            100% { background: transparent; }
+        }
+        .top50-card.outperform-secondary {
+            border-color: rgba(255,255,255,0.5);
+            border-left-color: #fff;
+            animation: top50PulseWhite 2s ease-in-out infinite;
+        }
+        .top50-card.outperform-secondary .top50-card-type-strip {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-bottom-color: rgba(255,255,255,0.15);
+        }
+        .top50-card.outperform-primary {
+            border-color: rgba(0,184,148,0.5);
+            border-left-color: var(--green);
+            animation: top50PulseRed 2s ease-in-out infinite;
+        }
+        .top50-card.outperform-primary .top50-card-type-strip {
+            background: rgba(0,184,148,0.1);
+            color: var(--green);
+            border-bottom-color: rgba(0,184,148,0.2);
+        }
+        .top50-outperform-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 1px 6px;
+            margin-left: 6px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .top50-outperform-badge.sec-wins {
+            color: #fff;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .top50-outperform-badge.pri-wins {
+            color: var(--green);
+            background: rgba(0,184,148,0.12);
+            border: 1px solid rgba(0,184,148,0.3);
+        }
+        .top50-delta-cell.outperforming {
+            animation: top50CellFlash 1.5s ease-in-out infinite alternate;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .top50-grid { grid-template-columns: 1fr; }
+            .top50-controls .search-input { width: 100%; }
+        }
+
         .sc-header-row {
             display: flex;
             justify-content: space-between;
@@ -2719,25 +3190,41 @@
             <div class="sc-header-row">
                 <div>
                     <h3>Top 50 Institutions</h3>
-                    <p class="chart-subtitle">Performance of the highest-volume institutions over time — line color shows primary provider</p>
+                    <p class="chart-subtitle">Performance of the highest-volume institutions over time — each card shows a sparkline trend, click to expand full detail</p>
                 </div>
             </div>
-            <div class="perf-decile-controls">
-                <label>Metric:</label>
-                <select class="sc-date-select" id="top50-metric" onchange="renderTop50Chart()">
+            <div class="top50-controls">
+                <input type="text" class="search-input" id="top50-search" placeholder="Search institutions…" oninput="filterTop50()">
+                <div class="top50-prov-pills">
+                    <span class="top50-prov-pill active" data-prov="All" onclick="setTop50Prov(this)">All</span>
+                    <span class="top50-prov-pill" data-prov="Plaid" onclick="setTop50Prov(this)">Plaid</span>
+                    <span class="top50-prov-pill" data-prov="Finicity" onclick="setTop50Prov(this)">Finicity</span>
+                    <span class="top50-prov-pill" data-prov="MX" onclick="setTop50Prov(this)">MX</span>
+                </div>
+                <label style="font-size:0.75rem;color:var(--text-dim);">Metric:</label>
+                <select class="sc-date-select" id="top50-metric" onchange="renderTop50Grid()">
                     <option value="weighted">Weighted</option>
                     <option value="success">Success</option>
                     <option value="longevity">Longevity</option>
                     <option value="update">Updates</option>
                 </select>
-                <label>Institutions:</label>
+                <label style="font-size:0.75rem;color:var(--text-dim);">Sort:</label>
+                <select class="sc-date-select" id="top50-sort" onchange="filterTop50()">
+                    <option value="rank">Rank</option>
+                    <option value="score-desc">Score ↓</option>
+                    <option value="score-asc">Score ↑</option>
+                    <option value="trend">Trend</option>
+                </select>
+                <label style="font-size:0.75rem;color:var(--text-dim);">Show:</label>
                 <select class="sc-date-select" id="top50-count" onchange="loadTop50()">
                     <option value="10">Top 10</option>
                     <option value="25">Top 25</option>
                     <option value="50" selected>Top 50</option>
                 </select>
-                <label style="font-size:0.75rem;color:var(--text-dim);margin-left:8px;">Click legend to toggle</label>
+                <button class="top50-btn" onclick="expandAllTop50()">Expand All</button>
+                <button class="top50-btn" onclick="collapseAllTop50()">Collapse All</button>
             </div>
+            <div id="top50-summary"></div>
             <div id="top50-progress" style="display:none;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
                     <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
@@ -2746,9 +3233,7 @@
                     <span id="top50-progress-text" style="font-size:0.75rem;color:var(--text-dim);min-width:80px;">Loading…</span>
                 </div>
             </div>
-            <div style="position:relative;height:500px;">
-                <canvas id="top50-chart"></canvas>
-            </div>
+            <div class="top50-grid" id="top50-grid"></div>
         </div>
 
         <!-- Session Selector -->
@@ -6485,8 +6970,9 @@
         let allDecileData = null;  // cached result from /api/history/all-deciles
         let allDecileLoading = false;
         let compareChart = null;
-        let top50Chart = null;
         let top50Data = null;
+        let top50Sparklines = [];   // array of Chart instances for sparklines
+        let top50DetailCharts = {}; // idx -> Chart instance for expanded detail
 
         function switchPerfView(view) {
             const viewNames = { 'by-provider': 'By Provider', 'by-decile': 'By Decile', 'compare': 'Compare Providers' };
@@ -7282,7 +7768,21 @@
             });
         }
 
-        // --- Top 50 Institutions ---
+        // --- Top 50 Institutions (Grid View) ---
+        const top50ProvColors = { 'Plaid': '#5dade2', 'Finicity': '#2d8659', 'MX': '#F79E1B', 'Unknown': '#555' };
+        let top50ProvFilter = 'All';
+
+        // Extract a specific secondary provider's metrics from a history entry
+        function getSecondaryMetrics(histEntry, provName) {
+            const addl = histEntry.additional_providers || [];
+            const match = addl.find(p => (p.name || p) === provName);
+            if (!match || (match.success == null && match.longevity == null && match.update == null)) return null;
+            const s = match.success, l = match.longevity, u = match.update;
+            // Treat null metrics as 0 so missing data penalises rather than inflates
+            const w = (s || 0) * 0.4 + (l || 0) * 0.3 + (u || 0) * 0.3;
+            return { success: s, longevity: l, update: u, weighted: Math.round(w * 100) / 100 };
+        }
+
         async function loadTop50() {
             const n = document.getElementById('top50-count').value;
             const progressEl = document.getElementById('top50-progress');
@@ -7300,116 +7800,459 @@
                 textEl.textContent = 'Done';
                 setTimeout(() => { progressEl.style.display = 'none'; }, 600);
                 document.getElementById('top50-section').style.display = '';
-                renderTop50Chart();
+                renderTop50Grid();
             } catch (e) {
                 console.error('Failed to load top institutions:', e);
                 textEl.textContent = 'Error';
             }
         }
 
-        function renderTop50Chart() {
-            if (!top50Data || top50Data.length === 0) return;
+        function setTop50Prov(el) {
+            top50ProvFilter = el.getAttribute('data-prov');
+            document.querySelectorAll('.top50-prov-pill').forEach(p => p.classList.toggle('active', p === el));
+            filterTop50();
+        }
 
+        function getTop50Filtered() {
+            if (!top50Data) return [];
             const metric = document.getElementById('top50-metric').value;
-            const provColors = {
-                'Plaid': '#5dade2',
-                'Finicity': '#2d8659',
-                'MX': '#F79E1B',
-                'Unknown': '#555',
-            };
+            const search = document.getElementById('top50-search').value.toLowerCase().trim();
+            const sort = document.getElementById('top50-sort').value;
 
-            const metricLabels = {
-                weighted: 'Weighted Score',
-                success: 'Success Rate',
-                longevity: 'Longevity',
-                update: 'Update Frequency',
-            };
-
-            // Collect all unique dates across all institutions
-            const allDates = new Set();
-            top50Data.forEach(inst => inst.history.forEach(h => allDates.add(h.date)));
-            const labels = [...allDates].sort();
-
-            const datasets = top50Data.map((inst, idx) => {
-                const dateMap = {};
-                inst.history.forEach(h => { dateMap[h.date] = h; });
-
-                // Build segment colors based on provider at each point
-                const pointColors = labels.map(d => {
-                    const h = dateMap[d];
-                    return h ? (provColors[h.provider] || provColors['Unknown']) : provColors['Unknown'];
-                });
-
-                // Segment the line by provider color changes
-                const segmentColor = (ctx) => {
-                    const i = ctx.p0DataIndex;
-                    return pointColors[i] || provColors['Unknown'];
-                };
-
-                return {
-                    label: `#${inst.current_rank} ${inst.institution_name}`,
-                    data: labels.map(d => {
-                        const h = dateMap[d];
-                        return h ? h[metric] : null;
-                    }),
-                    _history: labels.map(d => dateMap[d] || null),
-                    segment: {
-                        borderColor: segmentColor,
-                    },
-                    borderColor: provColors[inst.current_provider] || provColors['Unknown'],
-                    borderWidth: 1.5,
-                    pointRadius: 2,
-                    pointHoverRadius: 5,
-                    pointBackgroundColor: pointColors,
-                    fill: false,
-                    tension: 0.3,
-                    spanGaps: true,
-                    hidden: idx >= 10,  // show first 10 by default
-                };
+            let items = top50Data.map((inst, origIdx) => {
+                return { ...inst, origIdx, metric };
             });
 
-            const ctx = document.getElementById('top50-chart').getContext('2d');
-            if (top50Chart) top50Chart.destroy();
+            if (search) items = items.filter(i => i.institution_name.toLowerCase().includes(search));
+            if (top50ProvFilter !== 'All') {
+                items.forEach(i => {
+                    const secondaryNames = (i.current_additional_providers || []).map(p => p.name || p);
+                    if (i.current_provider === top50ProvFilter) {
+                        i._connType = 'primary';
+                    } else if (secondaryNames.includes(top50ProvFilter)) {
+                        i._connType = 'secondary';
+                    } else {
+                        i._connType = null;
+                    }
+                });
+                // Sort: primary first, secondary next, not-connected last
+                const connOrder = { primary: 0, secondary: 1, none: 2 };
+                items.forEach(i => { if (!i._connType) i._connType = 'none'; });
+                items.sort((a, b) => (connOrder[a._connType] ?? 3) - (connOrder[b._connType] ?? 3));
+            } else {
+                items.forEach(i => { i._connType = null; });
+            }
 
-            top50Chart = new Chart(ctx, {
+            // Compute latest/trend — use secondary provider metrics when appropriate
+            items.forEach(i => {
+                const h = i.history;
+                i._outperforms = false;
+                i._delta = null;
+                i._otherLabel = null;
+                i._otherScore = null;
+                if (i._connType === 'secondary' && h.length) {
+                    const lastH = h[h.length - 1];
+                    const lastSec = getSecondaryMetrics(lastH, top50ProvFilter);
+                    const firstSec = getSecondaryMetrics(h[0], top50ProvFilter);
+                    i.latest = lastSec ? lastSec[metric] : null;
+                    const fv = firstSec ? firstSec[metric] : null;
+                    i.trend = (i.latest != null && fv != null && fv !== 0) ? ((i.latest - fv) / fv) * 100 : 0;
+                    // Delta vs primary
+                    const priVal = lastH[metric];
+                    if (i.latest != null && priVal != null) i._delta = i.latest - priVal;
+                    i._otherLabel = i.current_provider;
+                    i._otherScore = priVal;
+                    // Check if secondary outperforms primary on weighted score
+                    const priWeighted = lastH.weighted;
+                    const secWeighted = lastSec ? lastSec.weighted : null;
+                    if (secWeighted != null && priWeighted != null && secWeighted > priWeighted + 0.5) {
+                        i._outperforms = true;
+                    }
+                } else {
+                    i.latest = h.length ? h[h.length - 1][metric] : null;
+                    const first = h.length ? h[0][metric] : null;
+                    i.trend = (i.latest != null && first != null && first !== 0) ? ((i.latest - first) / first) * 100 : 0;
+                    // For primary filtered cards, compute delta vs best secondary
+                    if (i._connType === 'primary' && h.length) {
+                        const lastH = h[h.length - 1];
+                        const addl = lastH.additional_providers || [];
+                        let bestSecName = null, bestSecVal = null, bestSecWeighted = null;
+                        addl.forEach(sp => {
+                            const spName = sp.name || sp;
+                            const sm = getSecondaryMetrics(lastH, spName);
+                            if (sm && sm[metric] != null) {
+                                if (bestSecVal == null || sm[metric] > bestSecVal) {
+                                    bestSecVal = sm[metric];
+                                    bestSecName = spName;
+                                    bestSecWeighted = sm.weighted;
+                                }
+                            }
+                        });
+                        if (bestSecVal != null && i.latest != null) {
+                            i._delta = i.latest - bestSecVal;
+                            i._otherLabel = bestSecName;
+                            i._otherScore = bestSecVal;
+                        }
+                        // Primary outperforms best secondary on weighted score
+                        if (lastH.weighted != null && bestSecWeighted != null && lastH.weighted > bestSecWeighted + 0.5) {
+                            i._outperforms = true;
+                        }
+                    }
+                }
+            });
+
+            if (sort === 'score-desc') items.sort((a, b) => (b.latest ?? -1) - (a.latest ?? -1));
+            else if (sort === 'score-asc') items.sort((a, b) => (a.latest ?? 999) - (b.latest ?? 999));
+            else if (sort === 'trend') items.sort((a, b) => b.trend - a.trend);
+            else items.sort((a, b) => a.current_rank - b.current_rank);
+
+            return items;
+        }
+
+        function filterTop50() {
+            renderTop50Grid();
+        }
+
+        function renderTop50Summary(metric) {
+            const el = document.getElementById('top50-summary');
+            if (!top50Data || !top50Data.length) { el.innerHTML = ''; return; }
+            const providers = ['Plaid', 'Finicity', 'MX'];
+            const stats = {};
+            providers.forEach(p => { stats[p] = { primary: 0, secondary: 0, higherNotPri: 0, lowerButPri: 0 }; });
+
+            top50Data.forEach(inst => {
+                const h = inst.history;
+                if (!h.length) return;
+                const lastH = h[h.length - 1];
+                const priProv = inst.current_provider;
+                const priScore = lastH[metric];
+
+                providers.forEach(prov => {
+                    if (priProv === prov) {
+                        stats[prov].primary++;
+                        // Check if any secondary scores higher
+                        const addl = lastH.additional_providers || [];
+                        let bestSecScore = null;
+                        addl.forEach(sp => {
+                            const spName = sp.name || sp;
+                            if (spName === prov) return;
+                            const sm = getSecondaryMetrics(lastH, spName);
+                            if (sm && sm[metric] != null) {
+                                if (bestSecScore == null || sm[metric] > bestSecScore) bestSecScore = sm[metric];
+                            }
+                        });
+                        if (bestSecScore != null && priScore != null && bestSecScore > priScore + 0.5) {
+                            stats[prov].lowerButPri++;
+                        }
+                    } else {
+                        // Check if this provider is a secondary
+                        const secNames = (inst.current_additional_providers || []).map(p => p.name || p);
+                        if (secNames.includes(prov)) {
+                            stats[prov].secondary++;
+                            const sm = getSecondaryMetrics(lastH, prov);
+                            if (sm && sm[metric] != null && priScore != null && sm[metric] > priScore + 0.5) {
+                                stats[prov].higherNotPri++;
+                            }
+                        }
+                    }
+                });
+            });
+
+            el.innerHTML = '<div class="top50-summary">' + providers.map(prov => {
+                const s = stats[prov];
+                const cls = prov.toLowerCase();
+                return `<div class="top50-summary-card ${cls}">
+                    <div class="top50-summary-prov">${prov}</div>
+                    <div class="top50-summary-row"><span class="top50-summary-label">Primary connections</span><span class="top50-summary-val">${s.primary}</span></div>
+                    <div class="top50-summary-row"><span class="top50-summary-label">Secondary connections</span><span class="top50-summary-val">${s.secondary}</span></div>
+                    <hr class="top50-summary-divider">
+                    <div class="top50-summary-row"><span class="top50-summary-label">Scores higher but not primary</span><span class="top50-summary-val green">${s.higherNotPri}</span></div>
+                    <div class="top50-summary-row"><span class="top50-summary-label">Scores lower but is primary</span><span class="top50-summary-val amber">${s.lowerButPri}</span></div>
+                </div>`;
+            }).join('') + '</div>';
+        }
+
+        function destroyTop50Charts() {
+            top50Sparklines.forEach(c => { if (c) c.destroy(); });
+            top50Sparklines = [];
+            Object.values(top50DetailCharts).forEach(c => { if (c) c.destroy(); });
+            top50DetailCharts = {};
+        }
+
+        function renderTop50Grid() {
+            destroyTop50Charts();
+            const grid = document.getElementById('top50-grid');
+            const items = getTop50Filtered();
+            const metric = document.getElementById('top50-metric').value;
+            renderTop50Summary(metric);
+
+            if (!items.length) {
+                grid.innerHTML = '<div class="top50-empty">No institutions match your filters.</div>';
+                return;
+            }
+
+            let html = '';
+            items.forEach((inst, idx) => {
+                const provClass = inst.current_provider ? inst.current_provider.toLowerCase() : '';
+                const latest = inst.latest != null ? inst.latest.toFixed(1) + '%' : 'N/A';
+                const trendVal = inst.trend;
+                let trendClass = 'flat', trendIcon = '—';
+                if (trendVal > 1) { trendClass = 'up'; trendIcon = '▲ ' + trendVal.toFixed(1) + '%'; }
+                else if (trendVal < -1) { trendClass = 'down'; trendIcon = '▼ ' + Math.abs(trendVal).toFixed(1) + '%'; }
+
+                const lastH = inst.history.length ? inst.history[inst.history.length - 1] : null;
+                const status = lastH ? lastH.status : '';
+                let statusClass = 'ok';
+                if (status === 'Issues reported') statusClass = 'issues';
+                else if (status === 'Unavailable') statusClass = 'unavailable';
+
+                const connType = inst._connType;
+                const isSecondary = connType === 'secondary';
+                const isNone = connType === 'none';
+                const secondaryClass = isSecondary ? ' secondary' : '';
+                const noneClass = isNone ? ' not-connected' : '';
+                let outperformClass = '';
+                if (inst._outperforms && isSecondary) outperformClass = ' outperform-secondary';
+                else if (inst._outperforms && connType === 'primary') outperformClass = ' outperform-primary';
+                // Type strip at top of card when provider filter is active
+                let typeStrip = '';
+                if (connType && connType !== 'none') {
+                    let outBadge = '';
+                    if (inst._outperforms && isSecondary) outBadge = '<span class="top50-outperform-badge sec-wins">▲ Outperforming Primary</span>';
+                    else if (inst._outperforms && connType === 'primary') outBadge = '<span class="top50-outperform-badge pri-wins">▲ Beating Secondary</span>';
+                    const stripLabel = connType === 'primary'
+                        ? `● Primary ${top50ProvFilter} Connection${outBadge}`
+                        : `◌ Secondary ${top50ProvFilter} Connection${outBadge}`;
+                    typeStrip = `<div class="top50-card-type-strip ${connType}">${stripLabel}</div>`;
+                } else if (isNone) {
+                    typeStrip = `<div class="top50-card-type-strip" style="background:rgba(100,100,100,0.1);color:#666;border-bottom-color:rgba(100,100,100,0.15);">✕ Not connected via ${top50ProvFilter}</div>`;
+                }
+
+                html += `<div class="top50-card${secondaryClass}${noneClass}${outperformClass}" data-prov="${inst.current_provider || ''}" data-idx="${idx}" id="top50-card-${idx}">
+                    ${typeStrip}
+                    <div class="top50-card-header" onclick="toggleTop50Card(${idx})">
+                        <div class="top50-card-row1">
+                            <span class="top50-rank">#${inst.current_rank}</span>
+                            <span class="top50-name" title="${inst.institution_name}">${inst.institution_name}</span>
+                            <span class="top50-expand-icon">▼</span>
+                        </div>
+                        <div class="top50-card-row2">
+                            <span class="top50-prov-badge ${provClass}">${inst.current_provider || '?'}</span>
+                            <span class="top50-status-dot ${statusClass}" title="${status}"></span>
+                            <span class="top50-score">${latest}</span>
+                            <span class="top50-trend ${trendClass}">${trendIcon}</span>
+                        </div>
+                        ${(() => {
+                            if (!connType || inst._delta == null) return '';
+                            const d = inst._delta;
+                            const dCls = d > 0.5 ? 'up' : d < -0.5 ? 'down' : 'flat';
+                            const sign = d > 0 ? '+' : '';
+                            const dText = sign + d.toFixed(1) + 'pp';
+                            const otherScore = inst._otherScore != null ? inst._otherScore.toFixed(1) + '%' : 'N/A';
+                            if (connType === 'secondary') {
+                                return `<div class="top50-card-delta-bar">
+                                    <span class="top50-delta-label">${top50ProvFilter}</span>
+                                    <span class="top50-delta-val">${latest}</span>
+                                    <span class="top50-delta-vs">vs</span>
+                                    <span class="top50-delta-label dim">${inst._otherLabel} (pri)</span>
+                                    <span class="top50-delta-val dim">${otherScore}</span>
+                                    <span class="top50-delta-pip ${dCls}">${dText}</span>
+                                </div>`;
+                            } else {
+                                return `<div class="top50-card-delta-bar">
+                                    <span class="top50-delta-label">${top50ProvFilter} (pri)</span>
+                                    <span class="top50-delta-val">${latest}</span>
+                                    <span class="top50-delta-vs">vs</span>
+                                    <span class="top50-delta-label dim">${inst._otherLabel} (sec)</span>
+                                    <span class="top50-delta-val dim">${otherScore}</span>
+                                    <span class="top50-delta-pip ${dCls}">${dText}</span>
+                                </div>`;
+                            }
+                        })()}
+                    </div>
+                    <div class="top50-sparkline-wrap" onclick="toggleTop50Card(${idx})">
+                        <canvas id="top50-spark-${idx}"></canvas>
+                    </div>
+                    <div class="top50-detail" id="top50-detail-${idx}">
+                        <div class="top50-detail-chart"><canvas id="top50-detail-canvas-${idx}"></canvas></div>
+                        <div class="top50-detail-stats" id="top50-detail-stats-${idx}"></div>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html;
+
+            // Batch-create sparklines
+            requestAnimationFrame(() => {
+                items.forEach((inst, idx) => {
+                    const cvs = document.getElementById('top50-spark-' + idx);
+                    if (!cvs) return;
+                    const ctx = cvs.getContext('2d');
+
+                    // For secondary connections, plot the secondary provider's metrics
+                    const isSecConn = inst._connType === 'secondary';
+                    const sparkProv = isSecConn ? top50ProvFilter : inst.current_provider;
+                    const data = isSecConn
+                        ? inst.history.map(h => { const m = getSecondaryMetrics(h, top50ProvFilter); return m ? m[metric] : null; })
+                        : inst.history.map(h => h[metric]);
+                    const mainColor = top50ProvColors[sparkProv] || top50ProvColors['Unknown'];
+
+                    const chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: inst.history.map(h => h.date),
+                            datasets: [{
+                                data: data,
+                                borderColor: mainColor,
+                                borderWidth: 1.5,
+                                pointRadius: 0,
+                                fill: {
+                                    target: 'origin',
+                                    above: (() => {
+                                        const c = mainColor;
+                                        if (c.startsWith('#')) {
+                                            const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+                                            return `rgba(${r},${g},${b},0.08)`;
+                                        }
+                                        return c.replace(')', ',0.08)').replace('rgb', 'rgba');
+                                    })(),
+                                },
+                                tension: 0.3,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } },
+                            elements: { point: { radius: 0 } },
+                        }
+                    });
+                    top50Sparklines.push(chart);
+                });
+            });
+
+            // Store filtered items for expand/collapse
+            window._top50Items = items;
+        }
+
+        function toggleTop50Card(idx) {
+            const card = document.getElementById('top50-card-' + idx);
+            const detail = document.getElementById('top50-detail-' + idx);
+            if (!card || !detail) return;
+
+            const isExpanded = card.classList.contains('expanded');
+            if (isExpanded) {
+                card.classList.remove('expanded');
+                detail.style.display = 'none';
+                if (top50DetailCharts[idx]) { top50DetailCharts[idx].destroy(); delete top50DetailCharts[idx]; }
+            } else {
+                card.classList.add('expanded');
+                detail.style.display = 'block';
+                renderTop50Detail(idx);
+            }
+        }
+
+        function renderTop50Detail(idx) {
+            const items = window._top50Items;
+            if (!items || !items[idx]) return;
+            const inst = items[idx];
+            const isSecConn = inst._connType === 'secondary';
+            const filteredProv = top50ProvFilter;
+
+            // Detail chart
+            const cvs = document.getElementById('top50-detail-canvas-' + idx);
+            if (!cvs) return;
+            if (top50DetailCharts[idx]) { top50DetailCharts[idx].destroy(); }
+
+            const labels = inst.history.map(h => h.date);
+            const resolvedColors = { 'var(--green)': '#00b894', 'var(--blue)': '#0984e3', 'var(--yellow)': '#fdcb6e' };
+
+            const metricDefs = [
+                { key: 'weighted', label: 'Weighted', color: '#e1e4eb', width: 2.5 },
+                { key: 'success', label: 'Success', color: '#00b894', width: 1.5 },
+                { key: 'longevity', label: 'Longevity', color: '#0984e3', width: 1.5 },
+                { key: 'update', label: 'Updates', color: '#fdcb6e', width: 1.5 },
+            ];
+
+            let datasets;
+            if (isSecConn) {
+                // Secondary connection: show secondary provider metrics as solid lines,
+                // primary as faded dashed lines for comparison
+                const secColor = top50ProvColors[filteredProv] || '#e1e4eb';
+                datasets = metricDefs.map(m => ({
+                    label: `${m.label} (${filteredProv})`,
+                    data: inst.history.map(h => {
+                        const sec = getSecondaryMetrics(h, filteredProv);
+                        return sec ? sec[m.key] : null;
+                    }),
+                    borderColor: m.color,
+                    borderWidth: m.width,
+                    pointRadius: m.key === 'weighted' ? 3 : 1,
+                    pointHoverRadius: 5,
+                    fill: false, tension: 0.3, spanGaps: true,
+                }));
+                // Add faded primary lines for comparison
+                metricDefs.forEach(m => {
+                    datasets.push({
+                        label: `${m.label} (${inst.current_provider})`,
+                        data: inst.history.map(h => h[m.key]),
+                        borderColor: m.color,
+                        borderWidth: 1,
+                        borderDash: [4, 3],
+                        pointRadius: 0,
+                        pointHoverRadius: 3,
+                        fill: false, tension: 0.3, spanGaps: true,
+                        // Fade the primary lines
+                        backgroundColor: 'transparent',
+                    });
+                });
+                // Make primary lines semi-transparent
+                datasets.slice(4).forEach(ds => {
+                    const c = ds.borderColor;
+                    if (c.startsWith('#')) {
+                        const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+                        ds.borderColor = `rgba(${r},${g},${b},0.35)`;
+                    }
+                });
+            } else {
+                // Primary connection: show primary metrics normally
+                const provColors = inst.history.map(h => top50ProvColors[h.provider] || top50ProvColors['Unknown']);
+                datasets = metricDefs.map(m => ({
+                    label: m.label,
+                    data: inst.history.map(h => h[m.key]),
+                    borderColor: m.color,
+                    borderWidth: m.width,
+                    pointRadius: m.key === 'weighted' ? 3 : 1,
+                    pointHoverRadius: 5,
+                    fill: false, tension: 0.3, spanGaps: true,
+                    segment: m.key === 'weighted' ? { borderColor: ctx2 => provColors[ctx2.p0DataIndex] || '#e1e4eb' } : {},
+                }));
+            }
+
+            top50DetailCharts[idx] = new Chart(cvs.getContext('2d'), {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'nearest', intersect: false },
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#8b8fa3',
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                font: { size: 10 },
-                                boxWidth: 8,
-                                padding: 8,
-                            }
+                            position: 'top',
+                            labels: { color: '#8b8fa3', usePointStyle: true, pointStyle: 'circle', font: { size: 10 }, boxWidth: 8, padding: 8 },
                         },
                         tooltip: {
-                            backgroundColor: '#1e2130',
-                            titleColor: '#e1e4eb',
-                            bodyColor: '#8b8fa3',
-                            borderColor: '#2e3241',
-                            borderWidth: 1,
-                            padding: 12,
+                            backgroundColor: '#1e2130', titleColor: '#e1e4eb', bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241', borderWidth: 1, padding: 10,
                             callbacks: {
                                 title: function(items) {
                                     if (!items.length) return '';
                                     const dt = new Date(items[0].label);
-                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                                 },
                                 label: function(ctx) {
-                                    const v = ctx.parsed.y;
-                                    const h = ctx.dataset._history ? ctx.dataset._history[ctx.dataIndex] : null;
-                                    const prov = h ? h.provider : '?';
-                                    const rank = h ? '#' + h.rank : '';
-                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'} [${prov}] ${rank}`;
+                                    return ` ${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) + '%' : 'N/A'}`;
                                 }
                             }
                         }
@@ -7417,26 +8260,153 @@
                     scales: {
                         x: {
                             type: 'time',
-                            time: {
-                                tooltipFormat: 'PPp',
-                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
-                            },
+                            time: { tooltipFormat: 'PPp', displayFormats: { hour: 'MMM d, ha', day: 'MMM d', month: 'MMM yyyy' } },
                             grid: { color: 'rgba(46,50,65,0.5)' },
-                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 8, font: { size: 10 } },
                         },
                         y: {
-                            min: 0,
-                            max: 100,
-                            grid: { color: 'rgba(46,50,65,0.5)' },
-                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
-                            title: {
-                                display: true,
-                                text: metricLabels[metric],
-                                color: '#8b8fa3',
+                            min: 0, max: 105,
+                            grid: {
+                                color: function(ctx) {
+                                    return ctx.tick.value === 100 ? 'rgba(225,228,235,0.35)' : 'rgba(46,50,65,0.5)';
+                                },
+                                lineWidth: function(ctx) {
+                                    return ctx.tick.value === 100 ? 2 : 1;
+                                },
+                            },
+                            ticks: {
+                                color: function(ctx) {
+                                    return ctx.tick.value === 100 ? '#e1e4eb' : '#8b8fa3';
+                                },
+                                callback: v => v <= 100 ? v + '%' : '',
+                                stepSize: 10,
+                                font: { size: 10 },
                             },
                         }
+                    },
+                    layout: {
+                        padding: { top: 10 }
                     }
                 }
+            });
+
+            // Stats row
+            const lastH = inst.history[inst.history.length - 1];
+            const statsEl = document.getElementById('top50-detail-stats-' + idx);
+            if (!lastH || !statsEl) return;
+
+            const status = lastH.status || 'OK';
+            let statusColor = 'var(--green)';
+            if (status === 'Issues reported') statusColor = 'var(--yellow)';
+            else if (status === 'Unavailable') statusColor = 'var(--red)';
+
+            if (isSecConn) {
+                // Show secondary provider metrics with clear delta comparison
+                const secMetrics = getSecondaryMetrics(lastH, filteredProv);
+                const priMetrics = { success: lastH.success, longevity: lastH.longevity, update: lastH.update, weighted: lastH.weighted };
+
+                const metrics = [
+                    { label: 'Success', key: 'success' },
+                    { label: 'Longevity', key: 'longevity' },
+                    { label: 'Updates', key: 'update' },
+                    { label: 'Weighted', key: 'weighted' },
+                ];
+
+                // Secondary provider metrics (prominent)
+                let statsHtml = `<div style="font-size:0.7rem;font-weight:700;color:#e0a030;width:100%;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">◌ ${filteredProv} — Secondary Connection</div>`;
+                statsHtml += metrics.map(m => {
+                    const sv = secMetrics ? secMetrics[m.key] : null;
+                    return `<div class="top50-detail-stat"><div class="label">${m.label}</div><div class="value">${sv != null ? sv.toFixed(1) + '%' : 'N/A'}</div></div>`;
+                }).join('');
+                statsHtml += `<div class="top50-detail-stat"><div class="label">Status</div><div class="value" style="color:${statusColor};font-size:0.82rem;">${status}</div></div>`;
+
+                // Delta comparison row
+                statsHtml += `<div class="top50-delta-row">
+                    <div style="width:100%;font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px;">Delta vs ${inst.current_provider} (primary)</div>`;
+                statsHtml += metrics.map(m => {
+                    const sv = secMetrics ? secMetrics[m.key] : null;
+                    const pv = priMetrics[m.key];
+                    let deltaText = '—', deltaCls = 'flat';
+                    if (sv != null && pv != null) {
+                        const d = sv - pv;
+                        deltaCls = d > 0.5 ? 'up' : d < -0.5 ? 'down' : 'flat';
+                        const sign = d > 0 ? '+' : '';
+                        deltaText = `${sign}${d.toFixed(1)}pp`;
+                    }
+                    const outCls = deltaCls === 'up' ? ' outperforming' : '';
+                    return `<div class="top50-delta-cell${outCls}"><div class="label">${m.label}</div><div class="delta ${deltaCls}">${deltaText}</div></div>`;
+                }).join('');
+                statsHtml += '</div>';
+
+                // Primary reference (faded)
+                statsHtml += `<div style="font-size:0.65rem;color:var(--text-dim);width:100%;text-transform:uppercase;letter-spacing:0.3px;margin-top:8px;margin-bottom:2px;">● ${inst.current_provider} — Primary Connection (reference)</div>`;
+                statsHtml += metrics.map(m =>
+                    `<div class="top50-detail-stat" style="opacity:0.45;"><div class="label">${m.label}</div><div class="value">${priMetrics[m.key] != null ? priMetrics[m.key].toFixed(1) + '%' : 'N/A'}</div></div>`
+                ).join('');
+
+                statsEl.innerHTML = statsHtml;
+            } else {
+                // Primary connection stats
+                let statsHtml = `<div style="font-size:0.7rem;font-weight:700;color:var(--green);width:100%;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">● ${lastH.provider || inst.current_provider} — Primary Connection</div>`;
+                statsHtml += [
+                    { label: 'Success', value: lastH.success },
+                    { label: 'Longevity', value: lastH.longevity },
+                    { label: 'Updates', value: lastH.update },
+                    { label: 'Weighted', value: lastH.weighted },
+                ].map(s =>
+                    `<div class="top50-detail-stat"><div class="label">${s.label}</div><div class="value">${s.value != null ? s.value.toFixed(1) + '%' : 'N/A'}</div></div>`
+                ).join('');
+                statsHtml += `<div class="top50-detail-stat"><div class="label">Status</div><div class="value" style="color:${statusColor};font-size:0.82rem;">${status}</div></div>`;
+
+                const addlProvs = lastH.additional_providers || [];
+                if (addlProvs.length) {
+                    addlProvs.forEach(sp => {
+                        const spName = sp.name || sp;
+                        statsHtml += `<div style="font-size:0.65rem;color:#e0a030;width:100%;text-transform:uppercase;letter-spacing:0.3px;margin-top:8px;margin-bottom:2px;border-top:1px dashed var(--border);padding-top:6px;">◌ ${spName} — Secondary Connection</div>`;
+                        if (sp.success != null || sp.longevity != null || sp.update != null) {
+                            const spW = [];
+                            if (sp.success != null) spW.push(sp.success * 0.4);
+                            if (sp.longevity != null) spW.push(sp.longevity * 0.3);
+                            if (sp.update != null) spW.push(sp.update * 0.3);
+                            const wt = spW.length ? spW.reduce((a,b) => a+b, 0) : null;
+                            statsHtml += [
+                                { label: 'Success', value: sp.success },
+                                { label: 'Longevity', value: sp.longevity },
+                                { label: 'Updates', value: sp.update },
+                                { label: 'Weighted', value: wt },
+                            ].map(s =>
+                                `<div class="top50-detail-stat"><div class="label">${s.label}</div><div class="value">${s.value != null ? s.value.toFixed(1) + '%' : 'N/A'}</div></div>`
+                            ).join('');
+                        } else {
+                            statsHtml += '<div class="top50-detail-stat"><div class="label">Metrics</div><div class="value" style="font-size:0.8rem;">N/A</div></div>';
+                        }
+                    });
+                }
+
+                statsEl.innerHTML = statsHtml;
+            }
+        }
+
+        function expandAllTop50() {
+            const items = window._top50Items;
+            if (!items) return;
+            let i = 0;
+            function expandNext() {
+                if (i >= items.length) return;
+                const card = document.getElementById('top50-card-' + i);
+                if (card && !card.classList.contains('expanded')) toggleTop50Card(i);
+                i++;
+                if (i < items.length) requestAnimationFrame(expandNext);
+            }
+            expandNext();
+        }
+
+        function collapseAllTop50() {
+            const items = window._top50Items;
+            if (!items) return;
+            items.forEach((_, idx) => {
+                const card = document.getElementById('top50-card-' + idx);
+                if (card && card.classList.contains('expanded')) toggleTop50Card(idx);
             });
         }
 

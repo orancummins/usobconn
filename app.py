@@ -939,6 +939,31 @@ def get_history_all_deciles():
     return jsonify(by_decile)
 
 
+def _parse_additional_providers(raw):
+    """Parse additional_providers JSON text into a list of provider info dicts."""
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            # New format: list of dicts with name + metrics; skip first (primary)
+            if data and isinstance(data[0], dict):
+                return [
+                    {
+                        "name": p.get("name", "Unknown"),
+                        "success": p.get("success_pct"),
+                        "longevity": p.get("longevity_pct"),
+                        "update": p.get("update_pct"),
+                    }
+                    for p in data[1:]
+                ]
+            # Old format: list of plain strings
+            return [{"name": p} for p in data]
+        return []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
 @app.route("/api/top-institutions-history")
 @login_required
 def get_top_institutions_history():
@@ -1014,16 +1039,25 @@ def get_top_institutions_history():
                 "date": sess.started_at.isoformat() if sess.started_at else None,
                 "rank": conn.rank,
                 "provider": conn.data_provider or "Unknown",
+                "additional_providers": _parse_additional_providers(conn.additional_providers),
                 "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
                 "success": avg_s,
                 "longevity": avg_l,
                 "update": avg_u,
                 "status": conn.connection_status,
             })
+
+        # Determine current additional providers from latest session
+        latest_conn = inst_data.get(latest.id)
+        current_additional = _parse_additional_providers(
+            latest_conn.additional_providers if latest_conn else None
+        )
+
         results.append({
             "institution_name": name,
             "current_rank": tc.rank,
             "current_provider": tc.data_provider or "Unknown",
+            "current_additional_providers": current_additional,
             "history": history,
         })
 
