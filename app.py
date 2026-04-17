@@ -360,6 +360,110 @@ def get_connections(session_id):
     })
 
 
+def _compute_institution_weighted(connections):
+    """Compute institution-weighted provider scores and distribution.
+
+    Weight tiers by rank (ballpark volume approximation):
+      Ranks 1-20:    70% / 20  = 3.5% each
+      Ranks 21-100:  20% / 80  = 0.25% each
+      Ranks 101-500:  7% / 400 = 0.0175% each
+      Ranks 501+:     3% / count_of_remaining
+    """
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+
+    if not connections:
+        return {}, {}
+
+    remaining_count = sum(1 for c in connections if (c.rank or 99999) > 500)
+    remaining_per = (0.03 / remaining_count) if remaining_count > 0 else 0
+
+    def inst_weight(rank):
+        if rank is None:
+            rank = 99999
+        if rank <= 20:
+            return 0.035
+        elif rank <= 100:
+            return 0.0025
+        elif rank <= 500:
+            return 0.000175
+        else:
+            return remaining_per
+
+    prov_data = {}
+    for c in connections:
+        prov = c.data_provider or "Unknown"
+        w = inst_weight(c.rank)
+        if prov not in prov_data:
+            prov_data[prov] = {
+                "w_s_sum": 0, "w_s_wt": 0,
+                "w_l_sum": 0, "w_l_wt": 0,
+                "w_u_sum": 0, "w_u_wt": 0,
+                "total_weight": 0, "count": 0,
+            }
+        pd = prov_data[prov]
+        pd["total_weight"] += w
+        pd["count"] += 1
+        if c.success_pct is not None:
+            pd["w_s_sum"] += c.success_pct * w
+            pd["w_s_wt"] += w
+        if c.longevity_pct is not None:
+            pd["w_l_sum"] += c.longevity_pct * w
+            pd["w_l_wt"] += w
+        if c.update_pct is not None:
+            pd["w_u_sum"] += c.update_pct * w
+            pd["w_u_wt"] += w
+
+    iw_scores = {}
+    iw_distribution = {}
+    total_weight_all = sum(pd["total_weight"] for pd in prov_data.values())
+
+    for prov, pd in prov_data.items():
+        avg_s = round(pd["w_s_sum"] / pd["w_s_wt"], 2) if pd["w_s_wt"] > 0 else None
+        avg_l = round(pd["w_l_sum"] / pd["w_l_wt"], 2) if pd["w_l_wt"] > 0 else None
+        avg_u = round(pd["w_u_sum"] / pd["w_u_wt"], 2) if pd["w_u_wt"] > 0 else None
+
+        parts, weights = [], []
+        if avg_s is not None:
+            parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
+        if avg_l is not None:
+            parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
+        if avg_u is not None:
+            parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
+
+        weight_pct = round(pd["total_weight"] / total_weight_all * 100, 2) if total_weight_all > 0 else 0
+        iw_scores[prov] = {
+            "avg_success": avg_s,
+            "avg_longevity": avg_l,
+            "avg_update": avg_u,
+            "weighted_avg": round(sum(parts) / sum(weights), 2) if weights else None,
+            "institution_count": pd["count"],
+            "weight_pct": weight_pct,
+            "weights": {"success": W_SUCCESS, "longevity": W_LONGEVITY, "update": W_UPDATE},
+        }
+        iw_distribution[prov] = weight_pct
+
+    return iw_scores, iw_distribution
+
+
+def _iw_history_providers(connections):
+    """Return institution-weighted provider metrics in the same shape as /api/history providers.
+
+    Returns: dict[str, dict] with keys: success, longevity, update, weighted, count
+    """
+    iw_scores, _ = _compute_institution_weighted(connections)
+    result = {}
+    for prov, sc in iw_scores.items():
+        result[prov] = {
+            "success": sc["avg_success"],
+            "longevity": sc["avg_longevity"],
+            "update": sc["avg_update"],
+            "weighted": sc["weighted_avg"],
+            "count": sc["institution_count"],
+            "weight_pct": sc["weight_pct"],
+        }
+    return result
+
+
 @app.route("/api/sessions/<int:session_id>/stats")
 @login_required
 def get_session_stats(session_id):
@@ -428,6 +532,10 @@ def get_session_stats(session_id):
             den = sum(sm.count for sm in summaries if getattr(sm, attr) is not None)
             return round(num / den, 2) if den > 0 else None
 
+        # Institution-weighted scores (needs per-row rank data)
+        iw_connections = Connection.query.filter_by(scrape_session_id=session_id).all()
+        iw_scores, iw_distribution = _compute_institution_weighted(iw_connections)
+
         return jsonify({
             "session": session.to_dict(),
             "total_institutions": total_institutions,
@@ -438,6 +546,8 @@ def get_session_stats(session_id):
             "provider_success_breakdown": provider_success_breakdown,
             "avg_longevity_pct": _overall_avg("avg_longevity"),
             "avg_update_pct": _overall_avg("avg_update"),
+            "institution_weighted_scores": iw_scores,
+            "institution_weighted_distribution": iw_distribution,
         })
 
     # Slow fallback — scan Connection rows
@@ -540,6 +650,8 @@ def get_session_stats(session_id):
         else None
     )
 
+    iw_scores, iw_distribution = _compute_institution_weighted(connections)
+
     return jsonify(
         {
             "session": session.to_dict(),
@@ -557,6 +669,8 @@ def get_session_stats(session_id):
             "avg_update_pct": (
                 round(sum(update_vals) / len(update_vals), 2) if update_vals else None
             ),
+            "institution_weighted_scores": iw_scores,
+            "institution_weighted_distribution": iw_distribution,
         }
     )
 
@@ -585,8 +699,11 @@ def get_history():
     Falls back to scanning Connection rows for sessions without summaries.
     Optional query param ?decile=0..9 filters to that 10% rank bucket
     (0 = top 10%, 9 = bottom 10%).  Omit for all institutions.
+    Optional query param ?top_n=10|20|50|100 filters to the top N institutions
+    by rank.  Mutually exclusive with decile.
     """
     decile = request.args.get("decile", type=int)
+    top_n = request.args.get("top_n", type=int)
 
     sessions = (
         ScrapeSession.query.filter_by(status="completed")
@@ -595,9 +712,9 @@ def get_history():
         .all()
     )
 
-    # When decile filter is used, we must fall back to Connection rows
+    # When decile or top_n filter is used, we must fall back to Connection rows
     # because summaries are whole-session aggregates.
-    use_summaries = decile is None
+    use_summaries = decile is None and top_n is None
 
     if use_summaries:
         # Fast path: read pre-computed summaries
@@ -611,6 +728,17 @@ def get_history():
         summaries_by_session: dict[int, list] = {}
         for sm in all_summaries:
             summaries_by_session.setdefault(sm.scrape_session_id, []).append(sm)
+
+        # Bulk-load connections for institution-weighted calculations
+        all_conns = (
+            Connection.query
+            .filter(Connection.scrape_session_id.in_(session_ids))
+            .order_by(Connection.rank)
+            .all()
+        ) if session_ids else []
+        conns_by_session: dict[int, list] = {}
+        for c in all_conns:
+            conns_by_session.setdefault(c.scrape_session_id, []).append(c)
 
     results = []
     W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
@@ -631,12 +759,14 @@ def get_history():
                     "issues_count": sm.issues_count,
                 }
                 total_issues += sm.issues_count
+            iw_provs = _iw_history_providers(conns_by_session.get(sess.id, []))
             results.append({
                 "session_id": sess.id,
                 "started_at": sess.started_at.isoformat() if sess.started_at else None,
                 "total_institutions": sess.total_institutions or sum(sm.count for sm in sms),
                 "total_issues": total_issues,
                 "providers": providers,
+                "iw_providers": iw_provs,
             })
         else:
             # Slow fallback — scan Connection rows (decile filter or no summaries)
@@ -646,7 +776,9 @@ def get_history():
                 .all()
             )
 
-            if decile is not None and 0 <= decile <= 9:
+            if top_n is not None and top_n > 0:
+                connections = connections[:top_n]
+            elif decile is not None and 0 <= decile <= 9:
                 n = len(connections)
                 bucket_size = n / 10
                 start = int(decile * bucket_size)
@@ -694,14 +826,206 @@ def get_history():
                     "issues_count": provider_issues.get(prov, 0),
                 }
 
-            total = len(connections) if decile is not None else (sess.total_institutions or len(connections))
+            total = len(connections) if (decile is not None or top_n is not None) else (sess.total_institutions or len(connections))
+            iw_provs = _iw_history_providers(connections)
             results.append({
                 "session_id": sess.id,
                 "started_at": sess.started_at.isoformat() if sess.started_at else None,
                 "total_institutions": total,
                 "total_issues": sum(provider_issues.values()),
                 "providers": providers,
+                "iw_providers": iw_provs,
             })
+
+    return jsonify(results)
+
+
+@app.route("/api/history/all-deciles")
+@login_required
+def get_history_all_deciles():
+    """Return per-provider stats for every decile (0-9) across all sessions in one pass.
+
+    Much faster than calling /api/history?decile=N ten times, because we load
+    each session's connections only once and bucket them locally.
+    """
+    sessions = (
+        ScrapeSession.query.filter_by(status="completed")
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
+        .order_by(ScrapeSession.started_at.desc())
+        .all()
+    )
+
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+
+    # result keyed by decile 0..9, each a list of session dicts (same shape as /api/history)
+    by_decile: dict[int, list] = {d: [] for d in range(10)}
+
+    for sess in sessions:
+        connections = (
+            Connection.query.filter_by(scrape_session_id=sess.id)
+            .order_by(Connection.rank)
+            .all()
+        )
+        n = len(connections)
+        if n == 0:
+            for d in range(10):
+                by_decile[d].append({
+                    "session_id": sess.id,
+                    "started_at": sess.started_at.isoformat() if sess.started_at else None,
+                    "total_institutions": 0,
+                    "total_issues": 0,
+                    "providers": {},
+                })
+            continue
+
+        bucket_size = n / 10
+
+        for d in range(10):
+            start = int(d * bucket_size)
+            end = int((d + 1) * bucket_size)
+            bucket = connections[start:end]
+
+            provider_metrics: dict[str, dict] = {}
+            provider_counts: dict[str, int] = {}
+            provider_issues: dict[str, int] = {}
+
+            for c in bucket:
+                prov = c.data_provider or "Unknown"
+                provider_counts[prov] = provider_counts.get(prov, 0) + 1
+                if c.connection_status == "Issues reported":
+                    provider_issues[prov] = provider_issues.get(prov, 0) + 1
+                if prov not in provider_metrics:
+                    provider_metrics[prov] = {"success": [], "longevity": [], "update": []}
+                if c.success_pct is not None:
+                    provider_metrics[prov]["success"].append(c.success_pct)
+                if c.longevity_pct is not None:
+                    provider_metrics[prov]["longevity"].append(c.longevity_pct)
+                if c.update_pct is not None:
+                    provider_metrics[prov]["update"].append(c.update_pct)
+
+            providers = {}
+            for prov, m in provider_metrics.items():
+                avg_s = round(sum(m["success"]) / len(m["success"]), 2) if m["success"] else None
+                avg_l = round(sum(m["longevity"]) / len(m["longevity"]), 2) if m["longevity"] else None
+                avg_u = round(sum(m["update"]) / len(m["update"]), 2) if m["update"] else None
+
+                parts, weights = [], []
+                if avg_s is not None:
+                    parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
+                if avg_l is not None:
+                    parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
+                if avg_u is not None:
+                    parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
+
+                providers[prov] = {
+                    "success": avg_s,
+                    "longevity": avg_l,
+                    "update": avg_u,
+                    "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
+                    "count": provider_counts.get(prov, 0),
+                    "issues_count": provider_issues.get(prov, 0),
+                }
+
+            iw_provs = _iw_history_providers(bucket)
+            by_decile[d].append({
+                "session_id": sess.id,
+                "started_at": sess.started_at.isoformat() if sess.started_at else None,
+                "total_institutions": len(bucket),
+                "total_issues": sum(provider_issues.values()),
+                "providers": providers,
+                "iw_providers": iw_provs,
+            })
+
+    return jsonify(by_decile)
+
+
+@app.route("/api/top-institutions-history")
+@login_required
+def get_top_institutions_history():
+    """Return performance history for the top N institutions (by rank) across sessions.
+
+    Query params:
+      ?n=50  (default 50, max 100)
+    Returns a list of institution objects each with a history array.
+    """
+    n = min(request.args.get("n", 50, type=int), 100)
+
+    sessions = (
+        ScrapeSession.query.filter_by(status="completed")
+        .filter(ScrapeSession.total_institutions >= MIN_SESSION_FIS)
+        .order_by(ScrapeSession.started_at.asc())
+        .all()
+    )
+    if not sessions:
+        return jsonify([])
+
+    # Use the latest session to determine which institutions are "top N"
+    latest = sessions[-1]
+    top_conns = (
+        Connection.query.filter_by(scrape_session_id=latest.id)
+        .order_by(Connection.rank)
+        .limit(n)
+        .all()
+    )
+    institution_names = [c.institution_name for c in top_conns]
+    if not institution_names:
+        return jsonify([])
+
+    session_ids = [s.id for s in sessions]
+    session_map = {s.id: s for s in sessions}
+
+    # Bulk-fetch all connections for these institutions across all sessions
+    all_conns = (
+        Connection.query
+        .filter(
+            Connection.scrape_session_id.in_(session_ids),
+            Connection.institution_name.in_(institution_names),
+        )
+        .all()
+    ) if session_ids else []
+
+    # Group by institution → session
+    from collections import defaultdict
+    by_inst: dict[str, dict[int, Connection]] = defaultdict(dict)
+    for c in all_conns:
+        by_inst[c.institution_name][c.scrape_session_id] = c
+
+    W_SUCCESS, W_LONGEVITY, W_UPDATE = 0.4, 0.3, 0.3
+    results = []
+    for tc in top_conns:
+        name = tc.institution_name
+        inst_data = by_inst.get(name, {})
+        history = []
+        for sess in sessions:
+            conn = inst_data.get(sess.id)
+            if not conn:
+                continue
+            avg_s = conn.success_pct
+            avg_l = conn.longevity_pct
+            avg_u = conn.update_pct
+            parts, weights = [], []
+            if avg_s is not None:
+                parts.append(avg_s * W_SUCCESS); weights.append(W_SUCCESS)
+            if avg_l is not None:
+                parts.append(avg_l * W_LONGEVITY); weights.append(W_LONGEVITY)
+            if avg_u is not None:
+                parts.append(avg_u * W_UPDATE); weights.append(W_UPDATE)
+            history.append({
+                "date": sess.started_at.isoformat() if sess.started_at else None,
+                "rank": conn.rank,
+                "provider": conn.data_provider or "Unknown",
+                "weighted": round(sum(parts) / sum(weights), 2) if weights else None,
+                "success": avg_s,
+                "longevity": avg_l,
+                "update": avg_u,
+                "status": conn.connection_status,
+            })
+        results.append({
+            "institution_name": name,
+            "current_rank": tc.rank,
+            "current_provider": tc.data_provider or "Unknown",
+            "history": history,
+        })
 
     return jsonify(results)
 

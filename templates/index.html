@@ -278,6 +278,22 @@
             margin-top: 4px;
         }
 
+        /* Pink institution-weighted stat card */
+        .stat-card.iw-stat {
+            border-color: rgba(219, 112, 147, 0.35);
+            background: linear-gradient(135deg, var(--surface) 80%, rgba(219, 112, 147, 0.06));
+        }
+        .stat-card.iw-stat .stat-value {
+            color: #db7093;
+        }
+        .stat-card.iw-stat .stat-label {
+            color: #db7093;
+            opacity: 0.85;
+        }
+        .stat-card.iw-stat .stat-info-icon {
+            background: #db7093;
+        }
+
         /* Session Selector */
         .session-bar {
             display: flex;
@@ -1004,6 +1020,40 @@
             border-top: 1px solid var(--border);
         }
 
+        /* Pink-themed institution-weighted cards */
+        .chart-card.iw-card {
+            border-color: rgba(219, 112, 147, 0.35);
+            background: linear-gradient(135deg, var(--surface) 80%, rgba(219, 112, 147, 0.06));
+        }
+        .chart-card.iw-card h3 {
+            color: #db7093;
+        }
+        .chart-card.iw-card .bar-chart-fill {
+            opacity: 0.9;
+        }
+        .chart-card.iw-card .iw-subtitle {
+            font-size: 0.75rem;
+            color: #db7093;
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+        .chart-card.iw-card .score-tooltip-result {
+            color: #db7093;
+        }
+        .chart-card.iw-card .bar-chart-value {
+            color: #db7093;
+        }
+        .chart-card.iw-card .iw-weight-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: rgba(219, 112, 147, 0.15);
+            color: #db7093;
+            border-radius: 4px;
+            padding: 1px 6px;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -1451,6 +1501,108 @@
             color: var(--text-dim);
             text-align: left;
             flex-shrink: 0;
+        }
+        .decile-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .decile-tab {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            transition: all 0.15s;
+        }
+        .decile-tab:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        .decile-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .decile-history-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .decile-history-controls label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .decile-history-chart-wrapper {
+            position: relative;
+            height: 320px;
+        }
+        .perf-view-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .perf-view-tab {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-dim);
+            transition: all 0.15s;
+        }
+        .perf-view-tab:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        .perf-view-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .perf-decile-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .perf-decile-controls label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* Pink IW perf section */
+        .history-chart-section.iw-perf-section {
+            border-color: rgba(219, 112, 147, 0.3);
+        }
+        .iw-perf-section h3 {
+            color: #db7093 !important;
+        }
+        .iw-perf-section .chart-subtitle {
+            color: rgba(219, 112, 147, 0.7) !important;
+        }
+        .iw-perf-section .perf-view-tab.active {
+            background: #db7093;
+            border-color: #db7093;
+        }
+        .iw-perf-section .perf-view-tab:hover {
+            border-color: #db7093;
+            color: #db7093;
+        }
+        .iw-perf-section .chart-metric-tab.active {
+            background: #db7093;
+            border-color: #db7093;
+        }
+        .iw-perf-section .chart-metric-tab:hover {
+            border-color: #db7093;
+            color: #db7093;
         }
 
         .live-table-body tr {
@@ -2220,8 +2372,34 @@
             <div class="decile-section" id="decile-section" style="display:none;">
                 <h3>Provider Share by Volume Decile</h3>
                 <p class="decile-subtitle">Institutions sorted by rank (highest volume first), split into 10 equal buckets — showing which provider dominates at each tier</p>
-                <div class="pixel-map-legend" id="decile-legend"></div>
-                <div id="decile-bars"></div>
+                <div class="decile-tabs">
+                    <button class="decile-tab active" onclick="switchDecileTab('snapshot')">Current Snapshot</button>
+                    <button class="decile-tab" onclick="switchDecileTab('history')">Over Time</button>
+                </div>
+                <div id="decile-snapshot-panel">
+                    <div class="pixel-map-legend" id="decile-legend"></div>
+                    <div id="decile-bars"></div>
+                </div>
+                <div id="decile-history-panel" style="display:none;">
+                    <div class="decile-history-controls">
+                        <label>Decile:</label>
+                        <select class="sc-date-select" id="decile-history-select" onchange="loadDecileHistory()">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </select>
+                    </div>
+                    <div class="decile-history-chart-wrapper">
+                        <canvas id="decile-history-chart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2233,19 +2411,27 @@
                     <p class="chart-subtitle">Percentage of institutions served by each provider across retrieval sessions</p>
                 </div>
                 <div>
-                    <label style="font-size:0.8rem;color:var(--text-dim);">Decile:</label>
+                    <label style="font-size:0.8rem;color:var(--text-dim);">Institutions:</label>
                     <select class="sc-date-select" id="share-decile-select" onchange="loadPerfChart(this.value)">
                         <option value="">All</option>
-                        <option value="0">Top 10%</option>
-                        <option value="1">10–20%</option>
-                        <option value="2">20–30%</option>
-                        <option value="3">30–40%</option>
-                        <option value="4">40–50%</option>
-                        <option value="5">50–60%</option>
-                        <option value="6">60–70%</option>
-                        <option value="7">70–80%</option>
-                        <option value="8">80–90%</option>
-                        <option value="9">Bottom 10%</option>
+                        <optgroup label="By Count">
+                            <option value="top_10">Top 10</option>
+                            <option value="top_20">Top 20</option>
+                            <option value="top_50">Top 50</option>
+                            <option value="top_100">Top 100</option>
+                        </optgroup>
+                        <optgroup label="By Decile">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
@@ -2261,31 +2447,307 @@
                     <h3>Provider Performance Over Time</h3>
                     <p class="chart-subtitle">Weighted score (Success 40% · Longevity 30% · Updates 30%) per provider across retrieval sessions</p>
                 </div>
-                <div>
-                    <label style="font-size:0.8rem;color:var(--text-dim);">Decile:</label>
+            </div>
+            <div class="perf-view-tabs">
+                <button class="perf-view-tab active" onclick="switchPerfView('by-provider')">By Provider</button>
+                <button class="perf-view-tab" onclick="switchPerfView('by-decile')">By Decile</button>
+                <button class="perf-view-tab" onclick="switchPerfView('compare')">Compare Providers</button>
+            </div>
+            <!-- By Provider panel (existing) -->
+            <div id="perf-by-provider-panel">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+                    <label style="font-size:0.8rem;color:var(--text-dim);">Institutions:</label>
                     <select class="sc-date-select" id="perf-decile-select" onchange="loadPerfChart(this.value)">
                         <option value="">All</option>
-                        <option value="0">Top 10%</option>
-                        <option value="1">10–20%</option>
-                        <option value="2">20–30%</option>
-                        <option value="3">30–40%</option>
-                        <option value="4">40–50%</option>
-                        <option value="5">50–60%</option>
-                        <option value="6">60–70%</option>
-                        <option value="7">70–80%</option>
-                        <option value="8">80–90%</option>
-                        <option value="9">Bottom 10%</option>
+                        <optgroup label="By Count">
+                            <option value="top_10">Top 10</option>
+                            <option value="top_20">Top 20</option>
+                            <option value="top_50">Top 50</option>
+                            <option value="top_100">Top 100</option>
+                        </optgroup>
+                        <optgroup label="By Decile">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </optgroup>
                     </select>
+                    <div class="chart-metric-tabs" id="chart-metric-tabs">
+                        <button class="chart-metric-tab active" data-metric="weighted" onclick="switchChartMetric('weighted')">Weighted</button>
+                        <button class="chart-metric-tab" data-metric="success" onclick="switchChartMetric('success')">Success</button>
+                        <button class="chart-metric-tab" data-metric="longevity" onclick="switchChartMetric('longevity')">Longevity</button>
+                        <button class="chart-metric-tab" data-metric="update" onclick="switchChartMetric('update')">Updates</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="perf-chart"></canvas>
                 </div>
             </div>
-            <div class="chart-metric-tabs" id="chart-metric-tabs">
-                <button class="chart-metric-tab active" data-metric="weighted" onclick="switchChartMetric('weighted')">Weighted</button>
-                <button class="chart-metric-tab" data-metric="success" onclick="switchChartMetric('success')">Success</button>
-                <button class="chart-metric-tab" data-metric="longevity" onclick="switchChartMetric('longevity')">Longevity</button>
-                <button class="chart-metric-tab" data-metric="update" onclick="switchChartMetric('update')">Updates</button>
+            <!-- By Decile panel -->
+            <div id="perf-by-decile-panel" style="display:none;">
+                <div class="perf-decile-controls">
+                    <label>Provider:</label>
+                    <select class="sc-date-select" id="perf-bydecile-provider" onchange="renderPerfByDecileChart()">
+                        <option value="Plaid">Plaid</option>
+                        <option value="Finicity">Finicity</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Metric:</label>
+                    <select class="sc-date-select" id="perf-bydecile-metric" onchange="renderPerfByDecileChart()">
+                        <option value="weighted">Weighted</option>
+                        <option value="success">Success</option>
+                        <option value="longevity">Longevity</option>
+                        <option value="update">Updates</option>
+                    </select>
+                </div>
+                <div id="perf-bydecile-progress" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+                            <div id="perf-bydecile-progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width 0.3s;"></div>
+                        </div>
+                        <span id="perf-bydecile-progress-text" style="font-size:0.75rem;color:var(--text-dim);min-width:80px;">Loading…</span>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="perf-bydecile-chart"></canvas>
+                </div>
             </div>
-            <div class="chart-canvas-wrapper">
-                <canvas id="perf-chart"></canvas>
+            <!-- Compare Providers panel -->
+            <div id="perf-compare-panel" style="display:none;">
+                <div class="perf-decile-controls">
+                    <label>Provider 1:</label>
+                    <select class="sc-date-select" id="compare-provider1" onchange="renderCompareChart()">
+                        <option value="Plaid">Plaid</option>
+                        <option value="Finicity">Finicity</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Provider 2:</label>
+                    <select class="sc-date-select" id="compare-provider2" onchange="renderCompareChart()">
+                        <option value="Finicity">Finicity</option>
+                        <option value="Plaid">Plaid</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Institutions:</label>
+                    <select class="sc-date-select" id="compare-decile" onchange="renderCompareChart()">
+                        <option value="">All</option>
+                        <optgroup label="By Count">
+                            <option value="top_10">Top 10</option>
+                            <option value="top_20">Top 20</option>
+                            <option value="top_50">Top 50</option>
+                            <option value="top_100">Top 100</option>
+                        </optgroup>
+                        <optgroup label="By Decile">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </optgroup>
+                    </select>
+                    <label>Metric:</label>
+                    <select class="sc-date-select" id="compare-metric" onchange="renderCompareChart()">
+                        <option value="weighted">Weighted</option>
+                        <option value="success">Success</option>
+                        <option value="longevity">Longevity</option>
+                        <option value="update">Updates</option>
+                    </select>
+                </div>
+                <div id="compare-progress" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+                            <div id="compare-progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width 0.3s;"></div>
+                        </div>
+                        <span id="compare-progress-text" style="font-size:0.75rem;color:var(--text-dim);min-width:80px;">Loading…</span>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="compare-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Performance Over Time (Ballpark Institution Weightings) -->
+        <div class="history-chart-section iw-perf-section" id="iw-perf-chart-section" style="display:none;">
+            <div class="sc-header-row">
+                <div>
+                    <h3>Provider Performance Over Time (Ballpark Institution Weightings)</h3>
+                    <p class="chart-subtitle">Institution-weighted scores — larger institutions have proportionally more influence on the metric</p>
+                </div>
+            </div>
+            <div class="perf-view-tabs">
+                <button class="perf-view-tab active" onclick="switchIwPerfView('by-provider')">By Provider</button>
+                <button class="perf-view-tab" onclick="switchIwPerfView('by-decile')">By Decile</button>
+                <button class="perf-view-tab" onclick="switchIwPerfView('compare')">Compare Providers</button>
+            </div>
+            <!-- IW By Provider panel -->
+            <div id="iw-perf-by-provider-panel">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+                    <label style="font-size:0.8rem;color:#db7093;">Institutions:</label>
+                    <select class="sc-date-select" id="iw-perf-decile-select" onchange="loadIwPerfChart(this.value)">
+                        <option value="">All</option>
+                        <optgroup label="By Count">
+                            <option value="top_10">Top 10</option>
+                            <option value="top_20">Top 20</option>
+                            <option value="top_50">Top 50</option>
+                            <option value="top_100">Top 100</option>
+                        </optgroup>
+                        <optgroup label="By Decile">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </optgroup>
+                    </select>
+                    <div class="chart-metric-tabs" id="iw-chart-metric-tabs">
+                        <button class="chart-metric-tab active" data-metric="weighted" onclick="switchIwChartMetric('weighted')">Weighted</button>
+                        <button class="chart-metric-tab" data-metric="success" onclick="switchIwChartMetric('success')">Success</button>
+                        <button class="chart-metric-tab" data-metric="longevity" onclick="switchIwChartMetric('longevity')">Longevity</button>
+                        <button class="chart-metric-tab" data-metric="update" onclick="switchIwChartMetric('update')">Updates</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="iw-perf-chart"></canvas>
+                </div>
+            </div>
+            <!-- IW By Decile panel -->
+            <div id="iw-perf-by-decile-panel" style="display:none;">
+                <div class="perf-decile-controls">
+                    <label>Provider:</label>
+                    <select class="sc-date-select" id="iw-perf-bydecile-provider" onchange="renderIwPerfByDecileChart()">
+                        <option value="Plaid">Plaid</option>
+                        <option value="Finicity">Finicity</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Metric:</label>
+                    <select class="sc-date-select" id="iw-perf-bydecile-metric" onchange="renderIwPerfByDecileChart()">
+                        <option value="weighted">Weighted</option>
+                        <option value="success">Success</option>
+                        <option value="longevity">Longevity</option>
+                        <option value="update">Updates</option>
+                    </select>
+                </div>
+                <div id="iw-perf-bydecile-progress" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+                            <div id="iw-perf-bydecile-progress-bar" style="height:100%;width:0%;background:#db7093;border-radius:3px;transition:width 0.3s;"></div>
+                        </div>
+                        <span id="iw-perf-bydecile-progress-text" style="font-size:0.75rem;color:#db7093;min-width:80px;">Loading…</span>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="iw-perf-bydecile-chart"></canvas>
+                </div>
+            </div>
+            <!-- IW Compare Providers panel -->
+            <div id="iw-perf-compare-panel" style="display:none;">
+                <div class="perf-decile-controls">
+                    <label>Provider 1:</label>
+                    <select class="sc-date-select" id="iw-compare-provider1" onchange="renderIwCompareChart()">
+                        <option value="Plaid">Plaid</option>
+                        <option value="Finicity">Finicity</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Provider 2:</label>
+                    <select class="sc-date-select" id="iw-compare-provider2" onchange="renderIwCompareChart()">
+                        <option value="Finicity">Finicity</option>
+                        <option value="Plaid">Plaid</option>
+                        <option value="MX">MX</option>
+                    </select>
+                    <label>Institutions:</label>
+                    <select class="sc-date-select" id="iw-compare-decile" onchange="renderIwCompareChart()">
+                        <option value="">All</option>
+                        <optgroup label="By Count">
+                            <option value="top_10">Top 10</option>
+                            <option value="top_20">Top 20</option>
+                            <option value="top_50">Top 50</option>
+                            <option value="top_100">Top 100</option>
+                        </optgroup>
+                        <optgroup label="By Decile">
+                            <option value="0">Top 10%</option>
+                            <option value="1">10–20%</option>
+                            <option value="2">20–30%</option>
+                            <option value="3">30–40%</option>
+                            <option value="4">40–50%</option>
+                            <option value="5">50–60%</option>
+                            <option value="6">60–70%</option>
+                            <option value="7">70–80%</option>
+                            <option value="8">80–90%</option>
+                            <option value="9">Bottom 10%</option>
+                        </optgroup>
+                    </select>
+                    <label>Metric:</label>
+                    <select class="sc-date-select" id="iw-compare-metric" onchange="renderIwCompareChart()">
+                        <option value="weighted">Weighted</option>
+                        <option value="success">Success</option>
+                        <option value="longevity">Longevity</option>
+                        <option value="update">Updates</option>
+                    </select>
+                </div>
+                <div id="iw-compare-progress" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+                            <div id="iw-compare-progress-bar" style="height:100%;width:0%;background:#db7093;border-radius:3px;transition:width 0.3s;"></div>
+                        </div>
+                        <span id="iw-compare-progress-text" style="font-size:0.75rem;color:#db7093;min-width:80px;">Loading…</span>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                    <canvas id="iw-compare-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 50 Institutions Over Time -->
+        <div class="history-chart-section" id="top50-section" style="display:none;">
+            <div class="sc-header-row">
+                <div>
+                    <h3>Top 50 Institutions</h3>
+                    <p class="chart-subtitle">Performance of the highest-volume institutions over time — line color shows primary provider</p>
+                </div>
+            </div>
+            <div class="perf-decile-controls">
+                <label>Metric:</label>
+                <select class="sc-date-select" id="top50-metric" onchange="renderTop50Chart()">
+                    <option value="weighted">Weighted</option>
+                    <option value="success">Success</option>
+                    <option value="longevity">Longevity</option>
+                    <option value="update">Updates</option>
+                </select>
+                <label>Institutions:</label>
+                <select class="sc-date-select" id="top50-count" onchange="loadTop50()">
+                    <option value="10">Top 10</option>
+                    <option value="25">Top 25</option>
+                    <option value="50" selected>Top 50</option>
+                </select>
+                <label style="font-size:0.75rem;color:var(--text-dim);margin-left:8px;">Click legend to toggle</label>
+            </div>
+            <div id="top50-progress" style="display:none;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+                        <div id="top50-progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width 0.3s;"></div>
+                    </div>
+                    <span id="top50-progress-text" style="font-size:0.75rem;color:var(--text-dim);min-width:80px;">Loading…</span>
+                </div>
+            </div>
+            <div style="position:relative;height:500px;">
+                <canvas id="top50-chart"></canvas>
             </div>
         </div>
 
@@ -2540,6 +3002,31 @@
                 <h3>Retrieval History</h3>
                 <p>Each retrieval is timestamped and stored. The history panel at the bottom compares runs over time, with delta arrows showing how each metric changed from the previous retrieval. This lets you track whether providers are improving or degrading.</p>
 
+                <div style="border-top:2px solid #db7093;margin:24px 0 16px;padding-top:16px;">
+                <h2 style="color:#db7093;">Ballpark Institution Weightings</h2>
+                <p>The standard metrics treat all ~11,000 institutions equally. In reality, a handful of large banks drive the vast majority of transaction volume. The <span style="color:#db7093;font-weight:600;">pink-highlighted metrics</span> attempt to approximate this by assigning each institution a ballpark volume weight based on its popularity rank.</p>
+
+                <h3 style="color:#db7093;">Weight Tiers</h3>
+                <div class="formula" style="border-color:rgba(219,112,147,0.3);color:#db7093;">
+                    Ranks 1–20  →  70% total weight  (3.50% each)<br>
+                    Ranks 21–100  →  20% total weight  (0.25% each)<br>
+                    Ranks 101–500  →  7% total weight  (0.0175% each)<br>
+                    Ranks 501+  →  3% total weight  (split equally)
+                </div>
+                <p>For example, a Top-20 institution has ~14× the weight of a rank 21–100 institution, and ~200× the weight of a rank 101–500 institution.</p>
+
+                <h3 style="color:#db7093;">Institution-Weighted Scoring</h3>
+                <p>Instead of a simple average across all institutions, each metric (Success, Longevity, Updates) is computed as a <em>weighted average</em> where each institution's contribution is proportional to its estimated volume weight:</p>
+                <div class="formula" style="border-color:rgba(219,112,147,0.3);color:#db7093;">Metric<sub>weighted</sub> = Σ(Institution Score × Institution Weight) ÷ Σ(Institution Weight)</div>
+                <p>These weighted per-metric averages are then combined using the same 40/30/30 formula:</p>
+                <div class="formula" style="border-color:rgba(219,112,147,0.3);color:#db7093;">Weighted Score = (Wtd Success × 40%) + (Wtd Longevity × 30%) + (Wtd Updates × 30%)</div>
+
+                <h3 style="color:#db7093;">Institution-Weighted Distribution</h3>
+                <p>Shows each provider's share of <em>estimated transaction volume</em> rather than raw institution count. A provider covering the Top 20 banks would show a much larger share here than in the standard distribution.</p>
+
+                <p class="note" style="color:#db7093;">These weights are rough estimates. Actual transaction volumes vary significantly and are not publicly available. The tiers provide a directional approximation of real-world impact.</p>
+                </div>
+
                 <p class="note">Data is retrieved from Monarch's ISS API. Scores may vary between runs as Monarch updates their ratings. The retrieval fetches all ~11,000 institutions via the paginated API.</p>
             </div>
             </div><!-- modal-body -->
@@ -2575,6 +3062,14 @@
         <div class="fi-modal" onclick="event.stopPropagation()">
             <button class="fi-modal-close" onclick="closeWeightedAvgModal()">&times;</button>
             <div id="weighted-avg-modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Institution-Weighted Success Modal -->
+    <div class="fi-modal-overlay" id="iw-success-modal-overlay" onclick="closeIwSuccessModal(event)">
+        <div class="fi-modal" onclick="event.stopPropagation()">
+            <button class="fi-modal-close" onclick="closeIwSuccessModal()">&times;</button>
+            <div id="iw-success-modal-content"></div>
         </div>
     </div>
 
@@ -2788,6 +3283,20 @@
                     <div class="stat-value">${stats.avg_success_pct != null ? stats.avg_success_pct.toFixed(2) + '%' : 'N/A'}</div>
                     <div class="stat-label-row"><span class="stat-label">Avg Success Rate</span><span class="stat-info-icon">i</span></div>
                 </div>
+                <div class="stat-card iw-stat clickable" onclick="showIwSuccessModal()">
+                    <div class="stat-value">${(() => {
+                        const iws = stats.institution_weighted_scores || {};
+                        let num = 0, den = 0;
+                        for (const [, sc] of Object.entries(iws)) {
+                            if (sc.avg_success != null && sc.weight_pct > 0) {
+                                num += sc.avg_success * sc.weight_pct;
+                                den += sc.weight_pct;
+                            }
+                        }
+                        return den > 0 ? (num / den).toFixed(2) + '%' : 'N/A';
+                    })()}</div>
+                    <div class="stat-label-row"><span class="stat-label">Avg Success Rate (Ballpark Inst. Wtg)</span><span class="stat-info-icon">i</span></div>
+                </div>
             `;
         }
 
@@ -2877,6 +3386,65 @@
                     </div>`;
             }
 
+            // --- Institution-weighted score bars (pink) ---
+            const iwScores = stats.institution_weighted_scores || {};
+            let iwScoreBars = '';
+            const sortedIwProvs = Object.entries(iwScores)
+                .filter(([, sc]) => (sc.institution_count || 0) >= MIN_PROVIDER_FIS)
+                .sort((a, b) => (b[1].weighted_avg || 0) - (a[1].weighted_avg || 0));
+            for (const [prov, sc] of sortedIwProvs) {
+                const wavg = sc.weighted_avg;
+                const color = provColors[prov] || '#666';
+                const barW = wavg != null ? wavg : 0;
+                const avgS = sc.avg_success != null ? sc.avg_success.toFixed(2) + '%' : 'N/A';
+                const avgL = sc.avg_longevity != null ? sc.avg_longevity.toFixed(2) + '%' : 'N/A';
+                const avgU = sc.avg_update != null ? sc.avg_update.toFixed(2) + '%' : 'N/A';
+                const wavgStr = wavg != null ? wavg.toFixed(2) + '%' : 'N/A';
+                const instCount = sc.institution_count || 0;
+                const wpct = sc.weight_pct != null ? sc.weight_pct.toFixed(1) + '%' : '';
+                iwScoreBars += `
+                    <div class="bar-chart-row score-row">
+                        <div class="bar-chart-label" title="${esc(prov)}">${esc(prov)}<span class="iw-weight-badge">${wpct} vol</span></div>
+                        <div class="bar-chart-bar-wrapper">
+                            <div class="bar-chart-bar">
+                                <div class="bar-chart-fill" style="width: ${barW}%; background: ${color};"></div>
+                            </div>
+                            <div class="bar-chart-value">${wavgStr}</div>
+                        </div>
+                        <div class="score-tooltip">
+                            <div class="score-tooltip-header">${esc(prov)} — ${instCount} institutions (${wpct} est. volume)</div>
+                            <table class="score-tooltip-table">
+                                <tr><th>Metric</th><th>Wtd Avg</th><th>Weight</th></tr>
+                                <tr><td>Success</td><td>${avgS}</td><td>${(sc.weights.success * 100).toFixed(0)}%</td></tr>
+                                <tr><td>Longevity</td><td>${avgL}</td><td>${(sc.weights.longevity * 100).toFixed(0)}%</td></tr>
+                                <tr><td>Updates</td><td>${avgU}</td><td>${(sc.weights.update * 100).toFixed(0)}%</td></tr>
+                            </table>
+                            <div class="score-tooltip-result">Weighted Avg: <strong>${wavgStr}</strong></div>
+                        </div>
+                    </div>`;
+            }
+
+            // --- Institution-weighted distribution bars (pink) ---
+            const iwDist = stats.institution_weighted_distribution || {};
+            let iwDistBars = '';
+            const sortedIwDist = Object.entries(iwDist)
+                .filter(([prov]) => (iwScores[prov]?.institution_count || 0) >= MIN_PROVIDER_FIS)
+                .sort((a, b) => b[1] - a[1]);
+            for (const [prov, wpct] of sortedIwDist) {
+                const color = provColors[prov] || '#666';
+                const count = iwScores[prov]?.institution_count || 0;
+                iwDistBars += `
+                    <div class="bar-chart-row">
+                        <div class="bar-chart-label" title="${esc(prov)}">${esc(prov)}</div>
+                        <div class="bar-chart-bar-wrapper">
+                            <div class="bar-chart-bar">
+                                <div class="bar-chart-fill" style="width: ${wpct}%; background: ${color};"></div>
+                            </div>
+                            <div class="bar-chart-value">${wpct.toFixed(1)}% (${count} FIs)</div>
+                        </div>
+                    </div>`;
+            }
+
             section.innerHTML = `
                 <div class="chart-card">
                     <h3>Provider Weighted Score</h3>
@@ -2890,6 +3458,16 @@
                 <div class="chart-card">
                     <h3>Connection Status</h3>
                     ${statusBars}
+                </div>
+                <div class="chart-card iw-card">
+                    <h3>Provider Weighted Score (Ballpark Institution Weightings)</h3>
+                    <div class="iw-subtitle">Scores weighted by estimated institution volume: Top 20 ≈ 70% · Next 80 ≈ 20% · Next 400 ≈ 7% · Rest ≈ 3%</div>
+                    ${iwScoreBars}
+                </div>
+                <div class="chart-card iw-card">
+                    <h3>Provider Distribution (Ballpark Institution Weightings)</h3>
+                    <div class="iw-subtitle">Share of estimated transaction volume by provider</div>
+                    ${iwDistBars}
                 </div>
             `;
         }
@@ -4016,6 +4594,151 @@
             barsEl.innerHTML = html;
         }
 
+        // --- Decile Over Time ---
+        let decileHistoryChart = null;
+        let decileHistoryCache = {};
+
+        function switchDecileTab(tab) {
+            document.querySelectorAll('.decile-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === (tab === 'snapshot' ? 'Current Snapshot' : 'Over Time'));
+            });
+            document.getElementById('decile-snapshot-panel').style.display = tab === 'snapshot' ? '' : 'none';
+            document.getElementById('decile-history-panel').style.display = tab === 'history' ? '' : 'none';
+            if (tab === 'history') loadDecileHistory();
+        }
+
+        async function loadDecileHistory() {
+            const decile = document.getElementById('decile-history-select').value;
+            try {
+                // Use bulk endpoint if already cached, otherwise fetch it
+                if (allDecileData) {
+                    renderDecileHistoryChart(allDecileData[decile], decile);
+                    return;
+                }
+                if (!decileHistoryCache[decile]) {
+                    const res = await fetch(BASE + '/api/history?decile=' + decile);
+                    decileHistoryCache[decile] = await res.json();
+                }
+                renderDecileHistoryChart(decileHistoryCache[decile], decile);
+            } catch (e) {
+                console.error('Failed to load decile history:', e);
+            }
+        }
+
+        function renderDecileHistoryChart(runs, decile) {
+            if (!runs || runs.length === 0) return;
+
+            const provColors = {
+                'Plaid':    { line: '#5dade2', bg: 'rgba(93,173,226,0.35)' },
+                'Finicity': { line: '#2d8659', bg: 'rgba(45,134,89,0.4)' },
+                'MX':       { line: '#F79E1B', bg: 'rgba(247,158,27,0.35)' },
+            };
+            const provOrder = ['Plaid', 'Finicity', 'MX'];
+            const MIN_CHART_FIS = 1;
+
+            const chronological = [...runs].reverse();
+
+            const allProvs = new Set();
+            chronological.forEach(r => Object.keys(r.providers).forEach(p => {
+                if ((r.providers[p].count || 0) >= MIN_CHART_FIS) allProvs.add(p);
+            }));
+            const provs = provOrder.filter(p => allProvs.has(p));
+            allProvs.forEach(p => { if (!provs.includes(p)) provs.push(p); });
+
+            const labels = chronological.map(r => r.started_at);
+            const decileLabels = ['Top 10%', '10–20%', '20–30%', '30–40%', '40–50%',
+                                  '50–60%', '60–70%', '70–80%', '80–90%', 'Bottom 10%'];
+
+            const datasets = provs.map(prov => {
+                const colors = provColors[prov] || { line: '#888', bg: 'rgba(136,136,136,0.35)' };
+                return {
+                    label: prov,
+                    data: chronological.map(r => {
+                        const p = r.providers[prov];
+                        const total = r.total_institutions || 1;
+                        return p ? Math.round((p.count / total) * 10000) / 100 : null;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: colors.line,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true,
+                };
+            });
+
+            const ctx = document.getElementById('decile-history-chart').getContext('2d');
+            if (decileHistoryChart) decileHistoryChart.destroy();
+
+            decileHistoryChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(chronological) },
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const run = chronological[ctx.dataIndex];
+                                    const prov = ctx.dataset.label;
+                                    const count = run?.providers[prov]?.count || 0;
+                                    return ` ${prov}: ${v != null ? v.toFixed(1) + '%' : 'N/A'} (${count} FIs)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: 'Share of ' + decileLabels[decile] + ' Institutions',
+                                color: '#8b8fa3',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
         function getDisplayConnections() {
             return filteredConnections !== null ? filteredConnections : currentConnections;
         }
@@ -4288,6 +5011,53 @@
         function closeWeightedAvgModal(event) {
             if (event && event.target !== document.getElementById('weighted-avg-modal-overlay')) return;
             document.getElementById('weighted-avg-modal-overlay').classList.remove('active');
+        }
+
+        function showIwSuccessModal() {
+            if (!currentStats) return;
+            const iws = currentStats.institution_weighted_scores || {};
+            const provColors = { 'Plaid': '#5dade2', 'Finicity': '#2d8659', 'MX': '#F79E1B' };
+            let totalWeightPct = 0;
+            const rows = [];
+            for (const [prov, sc] of Object.entries(iws)) {
+                if (sc.avg_success != null && sc.weight_pct > 0) {
+                    totalWeightPct += sc.weight_pct;
+                    rows.push({ prov, avg_success: sc.avg_success, count: sc.institution_count, weight_pct: sc.weight_pct });
+                }
+            }
+            let overallIw = 0;
+            rows.forEach(r => { overallIw += r.avg_success * (r.weight_pct / totalWeightPct); });
+
+            let html = '<h2 style="color:#db7093;">Avg Success Rate (Ballpark Institution Weightings)</h2>';
+            html += '<p style="color:var(--text-dim);margin-bottom:15px;">Each institution is assigned a ballpark volume weight based on its rank. The success rate is then weighted by these volume estimates rather than treating all institutions equally.</p>';
+            html += '<div style="background:var(--bg);border:1px solid rgba(219,112,147,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:#db7093;">'
+                + 'Ranks 1–20 ≈ 70% weight · Ranks 21–100 ≈ 20% · Ranks 101–500 ≈ 7% · Ranks 501+ ≈ 3%</div>';
+            html += '<table class="ct-table" style="margin-bottom:15px;"><thead><tr>';
+            html += '<th>Provider</th><th>Wtd Avg Success</th><th>FI Count</th><th>Est. Volume</th><th>Contribution</th>';
+            html += '</tr></thead><tbody>';
+            rows.sort((a, b) => b.weight_pct - a.weight_pct);
+            rows.forEach(r => {
+                const contrib = totalWeightPct > 0 ? (r.avg_success * r.weight_pct / totalWeightPct).toFixed(2) : '0.00';
+                html += '<tr>';
+                html += '<td style="font-weight:600;color:' + (provColors[r.prov] || 'var(--text)') + '">' + esc(r.prov) + '</td>';
+                html += '<td>' + r.avg_success.toFixed(2) + '%</td>';
+                html += '<td>' + r.count.toLocaleString() + '</td>';
+                html += '<td>' + r.weight_pct.toFixed(1) + '%</td>';
+                html += '<td>' + contrib + '%</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            html += '<div style="text-align:right;font-size:1.1rem;font-weight:600;color:#db7093;">';
+            html += 'Institution-Weighted Average: ' + (totalWeightPct > 0 ? overallIw.toFixed(2) + '%' : 'N/A');
+            html += '</div>';
+
+            const overlay = document.getElementById('iw-success-modal-overlay');
+            document.getElementById('iw-success-modal-content').innerHTML = html;
+            overlay.classList.add('active');
+        }
+        function closeIwSuccessModal(event) {
+            if (event && event.target !== document.getElementById('iw-success-modal-overlay')) return;
+            document.getElementById('iw-success-modal-overlay').classList.remove('active');
         }
 
         let issuesSortField = 'rank';
@@ -5421,6 +6191,14 @@
         let perfChartData = null;
         let currentChartMetric = 'weighted';
 
+        // IW Perf section state
+        let iwPerfChart = null;
+        let iwPerfChartData = null;
+        let iwCurrentChartMetric = 'weighted';
+        let iwPerfByDecileChart = null;
+        let iwCompareChart = null;
+        let iwCompareTopNCache = {};
+
         // --- Red dotted annotation line plugin (sample-size transition) ---
         const sampleSizeAnnotationPlugin = {
             id: 'sampleSizeAnnotation',
@@ -5456,6 +6234,66 @@
         };
         Chart.register(sampleSizeAnnotationPlugin);
 
+        // Plugin: draw FI count annotations on compare chart data points
+        const compareFiAnnotationPlugin = {
+            id: 'compareFiAnnotation',
+            afterDatasetsDraw(chart) {
+                if (!chart.options.plugins.compareFiAnnotation) return;
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'center';
+
+                const datasets = chart.data.datasets;
+                const numDatasets = datasets.length;
+
+                datasets.forEach((ds, dsIdx) => {
+                    const counts = ds._counts;
+                    if (!counts) return;
+                    const meta = chart.getDatasetMeta(dsIdx);
+                    if (meta.hidden) return;
+
+                    // Only show annotation at first, last, and points where count changes
+                    let prevCount = null;
+                    const showAt = new Set();
+                    counts.forEach((c, i) => {
+                        if (i === 0 || i === counts.length - 1) showAt.add(i);
+                        if (c !== prevCount && prevCount !== null) { showAt.add(i); showAt.add(i - 1); }
+                        prevCount = c;
+                    });
+
+                    // Thin out if too dense — keep min 60px gap
+                    const sorted = [...showAt].sort((a, b) => a - b);
+                    const filtered = [];
+                    let lastX = -Infinity;
+                    sorted.forEach(i => {
+                        const pt = meta.data[i];
+                        if (!pt) return;
+                        const x = pt.x;
+                        if (x - lastX >= 60 || i === 0 || i === counts.length - 1) {
+                            filtered.push(i);
+                            lastX = x;
+                        }
+                    });
+
+                    const color = ds.borderColor || '#8b8fa3';
+                    ctx.fillStyle = color;
+
+                    filtered.forEach(i => {
+                        const pt = meta.data[i];
+                        if (!pt || pt.skip) return;
+                        const count = counts[i];
+                        if (!count) return;
+                        // Offset vertically: first dataset above, second below
+                        const yOff = dsIdx === 0 ? -12 : 14;
+                        ctx.fillText(count + ' FIs', pt.x, pt.y + yOff);
+                    });
+                });
+                ctx.restore();
+            }
+        };
+        Chart.register(compareFiAnnotationPlugin);
+
         // Detect index in chronological runs where total_institutions jumps from ~2k to ~10k
         function findSampleSizeTransition(runs) {
             for (let i = 1; i < runs.length; i++) {
@@ -5466,23 +6304,35 @@
             return -1;
         }
 
-        async function loadPerfChart(decile) {
+        async function loadPerfChart(filter) {
             try {
-                // Sync both decile dropdowns
-                if (decile === undefined || decile === null) decile = '';
-                document.getElementById('share-decile-select').value = decile;
-                document.getElementById('perf-decile-select').value = decile;
-                const url = decile !== '' ? BASE + '/api/history?decile=' + decile : BASE + '/api/history';
+                // Sync both dropdowns
+                if (filter === undefined || filter === null) filter = '';
+                document.getElementById('share-decile-select').value = filter;
+                document.getElementById('perf-decile-select').value = filter;
+                let url = BASE + '/api/history';
+                if (filter !== '') {
+                    if (String(filter).startsWith('top_')) {
+                        url += '?top_n=' + filter.replace('top_', '');
+                    } else {
+                        url += '?decile=' + filter;
+                    }
+                }
                 const res = await fetch(url);
                 const runs = await res.json();
                 if (!runs || runs.length === 0) {
                     document.getElementById('perf-chart-section').style.display = 'none';
+                    document.getElementById('iw-perf-chart-section').style.display = 'none';
                     return;
                 }
                 perfChartData = runs;
                 document.getElementById('perf-chart-section').style.display = '';
                 renderPerfChart(currentChartMetric);
                 renderShareChart();
+                // Also show/render IW perf section
+                iwPerfChartData = runs;
+                document.getElementById('iw-perf-chart-section').style.display = '';
+                renderIwPerfChart(iwCurrentChartMetric);
             } catch (e) {
                 console.error('Failed to load perf chart:', e);
             }
@@ -5629,6 +6479,969 @@
 
         // Load chart on page init
         loadPerfChart();
+
+        // --- Performance By Decile / Compare / Top 50 ---
+        let perfByDecileChart = null;
+        let allDecileData = null;  // cached result from /api/history/all-deciles
+        let allDecileLoading = false;
+        let compareChart = null;
+        let top50Chart = null;
+        let top50Data = null;
+
+        function switchPerfView(view) {
+            const viewNames = { 'by-provider': 'By Provider', 'by-decile': 'By Decile', 'compare': 'Compare Providers' };
+            document.querySelectorAll('.perf-view-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === viewNames[view]);
+            });
+            document.getElementById('perf-by-provider-panel').style.display = view === 'by-provider' ? '' : 'none';
+            document.getElementById('perf-by-decile-panel').style.display = view === 'by-decile' ? '' : 'none';
+            document.getElementById('perf-compare-panel').style.display = view === 'compare' ? '' : 'none';
+            if (view === 'by-decile') ensureAllDecileData().then(() => renderPerfByDecileChart());
+            if (view === 'compare') renderCompareChart();
+        }
+
+        async function ensureAllDecileData() {
+            if (allDecileData) return;
+            if (allDecileLoading) {
+                // Wait for in-flight load
+                while (allDecileLoading) await new Promise(r => setTimeout(r, 100));
+                return;
+            }
+            allDecileLoading = true;
+            // Show progress bars
+            const bars = ['perf-bydecile-progress', 'compare-progress', 'iw-perf-bydecile-progress', 'iw-compare-progress'];
+            bars.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+            const setProgress = (pct, text) => {
+                ['perf-bydecile-progress-bar', 'compare-progress-bar', 'iw-perf-bydecile-progress-bar', 'iw-compare-progress-bar'].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.style.width = pct + '%';
+                });
+                ['perf-bydecile-progress-text', 'compare-progress-text', 'iw-perf-bydecile-progress-text', 'iw-compare-progress-text'].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.textContent = text;
+                });
+            };
+            try {
+                setProgress(10, 'Fetching decile data…');
+                const res = await fetch(BASE + '/api/history/all-deciles');
+                setProgress(80, 'Processing…');
+                allDecileData = await res.json();
+                setProgress(100, 'Done');
+            } catch (e) {
+                console.error('Failed to load all-decile data:', e);
+                setProgress(0, 'Error');
+            } finally {
+                allDecileLoading = false;
+                setTimeout(() => bars.forEach(id => {
+                    const el = document.getElementById(id); if (el) el.style.display = 'none';
+                }), 600);
+            }
+        }
+
+        function renderPerfByDecileChart() {
+            const provider = document.getElementById('perf-bydecile-provider').value;
+            const metric = document.getElementById('perf-bydecile-metric').value;
+            if (!allDecileData) return;
+
+            const decileLabels = ['Top 10%', '10–20%', '20–30%', '30–40%', '40–50%',
+                                  '50–60%', '60–70%', '70–80%', '80–90%', 'Bottom 10%'];
+            const decileColors = [
+                { line: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+                { line: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+                { line: '#8b5cf6', bg: 'rgba(139,92,246,0.08)' },
+                { line: '#ec4899', bg: 'rgba(236,72,153,0.08)' },
+                { line: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+                { line: '#06b6d4', bg: 'rgba(6,182,212,0.08)' },
+                { line: '#10b981', bg: 'rgba(16,185,129,0.08)' },
+                { line: '#f43f5e', bg: 'rgba(244,63,94,0.08)' },
+                { line: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
+                { line: '#6b7280', bg: 'rgba(107,114,128,0.08)' },
+            ];
+
+            const metricLabels = {
+                weighted: 'Weighted Score',
+                success: 'Success Rate',
+                longevity: 'Longevity',
+                update: 'Update Frequency',
+            };
+
+            const runs0 = allDecileData['0'];
+            if (!runs0 || runs0.length === 0) return;
+            const chronological = [...runs0].reverse();
+            const labels = chronological.map(r => r.started_at);
+
+            const datasets = [];
+            for (let d = 0; d < 10; d++) {
+                const runs = allDecileData[String(d)];
+                if (!runs || runs.length === 0) continue;
+                const chronRuns = [...runs].reverse();
+                const colors = decileColors[d];
+                datasets.push({
+                    label: decileLabels[d],
+                    data: chronRuns.map(r => {
+                        const p = r.providers[provider];
+                        return p ? p[metric] : null;
+                    }),
+                    _counts: chronRuns.map(r => {
+                        const p = r.providers[provider];
+                        return p ? p.count : 0;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: colors.line,
+                    fill: false,
+                    tension: 0.3,
+                    spanGaps: true,
+                });
+            }
+
+            const ctx = document.getElementById('perf-bydecile-chart').getContext('2d');
+            if (perfByDecileChart) perfByDecileChart.destroy();
+
+            perfByDecileChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(chronological) },
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 11, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const count = ctx.dataset._counts ? ctx.dataset._counts[ctx.dataIndex] : '';
+                                    const countStr = count ? ` (${count} FIs)` : '';
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}${countStr}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] + ' — ' + provider,
+                                color: '#8b8fa3',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Compare Providers ---
+        let compareTopNCache = {};  // cache for top_n fetches: { 'top_10': runs[], ... }
+
+        async function renderCompareChart() {
+            const prov1 = document.getElementById('compare-provider1').value;
+            const prov2 = document.getElementById('compare-provider2').value;
+            const filter = document.getElementById('compare-decile').value;
+            const metric = document.getElementById('compare-metric').value;
+
+            let runs;
+            let filterLabel;
+            const decileLabels = ['Top 10%', '10–20%', '20–30%', '30–40%', '40–50%',
+                                  '50–60%', '60–70%', '70–80%', '80–90%', 'Bottom 10%'];
+
+            if (filter === '') {
+                // All institutions — use the main perfChartData
+                if (!perfChartData) return;
+                runs = perfChartData;
+                filterLabel = 'All Institutions';
+            } else if (String(filter).startsWith('top_')) {
+                // Top N — fetch and cache
+                if (!compareTopNCache[filter]) {
+                    const progressEl = document.getElementById('compare-progress');
+                    const barEl = document.getElementById('compare-progress-bar');
+                    const textEl = document.getElementById('compare-progress-text');
+                    progressEl.style.display = '';
+                    barEl.style.width = '30%'; textEl.textContent = 'Fetching…';
+                    try {
+                        const res = await fetch(BASE + '/api/history?top_n=' + filter.replace('top_', ''));
+                        barEl.style.width = '90%'; textEl.textContent = 'Processing…';
+                        compareTopNCache[filter] = await res.json();
+                        barEl.style.width = '100%'; textEl.textContent = 'Done';
+                        setTimeout(() => { progressEl.style.display = 'none'; }, 400);
+                    } catch (e) {
+                        console.error('Failed to load compare data:', e);
+                        textEl.textContent = 'Error';
+                        return;
+                    }
+                }
+                runs = compareTopNCache[filter];
+                filterLabel = 'Top ' + filter.replace('top_', '');
+            } else {
+                // Decile — use bulk data
+                if (!allDecileData) { await ensureAllDecileData(); }
+                if (!allDecileData) return;
+                runs = allDecileData[filter];
+                filterLabel = decileLabels[parseInt(filter)] || 'Decile ' + filter;
+            }
+
+            if (!runs || runs.length === 0) return;
+
+            const provColors = {
+                'Plaid':    { line: '#5dade2', bg: 'rgba(93,173,226,0.15)' },
+                'Finicity': { line: '#2d8659', bg: 'rgba(45,134,89,0.15)' },
+                'MX':       { line: '#F79E1B', bg: 'rgba(247,158,27,0.15)' },
+            };
+            const metricLabels = {
+                weighted: 'Weighted Score',
+                success: 'Success Rate',
+                longevity: 'Longevity',
+                update: 'Update Frequency',
+            };
+
+            const chronological = [...runs].reverse();
+            const labels = chronological.map(r => r.started_at);
+
+            const makeDataset = (prov, dashed) => {
+                const colors = provColors[prov] || { line: '#888', bg: 'rgba(136,136,136,0.15)' };
+                return {
+                    label: prov,
+                    data: chronological.map(r => {
+                        const p = r.providers[prov];
+                        return p ? p[metric] : null;
+                    }),
+                    _counts: chronological.map(r => {
+                        const p = r.providers[prov];
+                        return p ? p.count : 0;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2.5,
+                    borderDash: dashed ? [6, 3] : [],
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: colors.line,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true,
+                };
+            };
+
+            const datasets = [makeDataset(prov1, false)];
+            if (prov2 !== prov1) datasets.push(makeDataset(prov2, true));
+
+            const ctx = document.getElementById('compare-chart').getContext('2d');
+            if (compareChart) compareChart.destroy();
+
+            compareChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(chronological) },
+                        compareFiAnnotation: true,
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return filterLabel + ' — ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const count = ctx.dataset._counts ? ctx.dataset._counts[ctx.dataIndex] : '';
+                                    const countStr = count ? ` (${count} FIs)` : '';
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}${countStr}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] + ' — ' + filterLabel,
+                                color: '#8b8fa3',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // =====================================================================
+        // Institution-Weighted Performance Over Time (pink section)
+        // =====================================================================
+
+        function switchIwChartMetric(metric) {
+            iwCurrentChartMetric = metric;
+            document.querySelectorAll('#iw-chart-metric-tabs .chart-metric-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.metric === metric);
+            });
+            renderIwPerfChart(metric);
+        }
+
+        function switchIwPerfView(view) {
+            const viewNames = { 'by-provider': 'By Provider', 'by-decile': 'By Decile', 'compare': 'Compare Providers' };
+            document.querySelectorAll('#iw-perf-chart-section .perf-view-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === viewNames[view]);
+            });
+            document.getElementById('iw-perf-by-provider-panel').style.display = view === 'by-provider' ? '' : 'none';
+            document.getElementById('iw-perf-by-decile-panel').style.display = view === 'by-decile' ? '' : 'none';
+            document.getElementById('iw-perf-compare-panel').style.display = view === 'compare' ? '' : 'none';
+            if (view === 'by-decile') ensureAllDecileData().then(() => renderIwPerfByDecileChart());
+            if (view === 'compare') renderIwCompareChart();
+        }
+
+        async function loadIwPerfChart(filter) {
+            try {
+                if (filter === undefined || filter === null) filter = '';
+                document.getElementById('iw-perf-decile-select').value = filter;
+                let url = BASE + '/api/history';
+                if (filter !== '') {
+                    if (String(filter).startsWith('top_')) {
+                        url += '?top_n=' + filter.replace('top_', '');
+                    } else {
+                        url += '?decile=' + filter;
+                    }
+                }
+                const res = await fetch(url);
+                const runs = await res.json();
+                if (!runs || runs.length === 0) {
+                    document.getElementById('iw-perf-chart-section').style.display = 'none';
+                    return;
+                }
+                iwPerfChartData = runs;
+                document.getElementById('iw-perf-chart-section').style.display = '';
+                renderIwPerfChart(iwCurrentChartMetric);
+            } catch (e) {
+                console.error('Failed to load IW perf chart:', e);
+            }
+        }
+
+        function renderIwPerfChart(metric) {
+            if (!iwPerfChartData) return;
+
+            const provColors = {
+                'Plaid':    { line: '#5dade2', bg: 'rgba(93,173,226,0.1)' },
+                'Finicity': { line: '#2d8659', bg: 'rgba(45,134,89,0.15)' },
+                'MX':       { line: '#F79E1B', bg: 'rgba(247,158,27,0.1)' },
+            };
+            const provOrder = ['Plaid', 'Finicity', 'MX'];
+            const runs = [...iwPerfChartData].reverse();
+
+            const MIN_CHART_FIS = 10;
+            const allProvs = new Set();
+            runs.forEach(r => {
+                const iwp = r.iw_providers || {};
+                Object.keys(iwp).forEach(p => {
+                    if ((iwp[p].count || 0) >= MIN_CHART_FIS) allProvs.add(p);
+                });
+            });
+            const provs = provOrder.filter(p => allProvs.has(p));
+            allProvs.forEach(p => { if (!provs.includes(p)) provs.push(p); });
+
+            const labels = runs.map(r => r.started_at);
+            const metricLabels = {
+                weighted: 'Weighted Score (IW)',
+                success: 'Success Rate (IW)',
+                longevity: 'Longevity (IW)',
+                update: 'Update Frequency (IW)',
+            };
+
+            const datasets = provs.map(prov => {
+                const colors = provColors[prov] || { line: '#888', bg: 'rgba(136,136,136,0.1)' };
+                return {
+                    label: prov,
+                    data: runs.map(r => {
+                        const p = (r.iw_providers || {})[prov];
+                        return p ? p[metric] : null;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: colors.line,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true,
+                };
+            });
+
+            const ctx = document.getElementById('iw-perf-chart').getContext('2d');
+            if (iwPerfChart) iwPerfChart.destroy();
+
+            iwPerfChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(runs) },
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] || metric,
+                                color: '#db7093',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderIwPerfByDecileChart() {
+            const provider = document.getElementById('iw-perf-bydecile-provider').value;
+            const metric = document.getElementById('iw-perf-bydecile-metric').value;
+            if (!allDecileData) return;
+
+            const decileLabels = ['Top 10%', '10\u201320%', '20\u201330%', '30\u201340%', '40\u201350%',
+                                  '50\u201360%', '60\u201370%', '70\u201380%', '80\u201390%', 'Bottom 10%'];
+            const decileColors = [
+                { line: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+                { line: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+                { line: '#8b5cf6', bg: 'rgba(139,92,246,0.08)' },
+                { line: '#ec4899', bg: 'rgba(236,72,153,0.08)' },
+                { line: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+                { line: '#06b6d4', bg: 'rgba(6,182,212,0.08)' },
+                { line: '#10b981', bg: 'rgba(16,185,129,0.08)' },
+                { line: '#f43f5e', bg: 'rgba(244,63,94,0.08)' },
+                { line: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
+                { line: '#6b7280', bg: 'rgba(107,114,128,0.08)' },
+            ];
+            const metricLabels = {
+                weighted: 'Weighted Score (IW)',
+                success: 'Success Rate (IW)',
+                longevity: 'Longevity (IW)',
+                update: 'Update Frequency (IW)',
+            };
+
+            const runs0 = allDecileData['0'];
+            if (!runs0 || runs0.length === 0) return;
+            const chronological = [...runs0].reverse();
+            const labels = chronological.map(r => r.started_at);
+
+            const datasets = [];
+            for (let d = 0; d < 10; d++) {
+                const runs = allDecileData[String(d)];
+                if (!runs || runs.length === 0) continue;
+                const chronRuns = [...runs].reverse();
+                const colors = decileColors[d];
+                datasets.push({
+                    label: decileLabels[d],
+                    data: chronRuns.map(r => {
+                        const p = (r.iw_providers || {})[provider];
+                        return p ? p[metric] : null;
+                    }),
+                    _counts: chronRuns.map(r => {
+                        const p = (r.iw_providers || {})[provider];
+                        return p ? p.count : 0;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: colors.line,
+                    fill: false,
+                    tension: 0.3,
+                    spanGaps: true,
+                });
+            }
+
+            const ctx = document.getElementById('iw-perf-bydecile-chart').getContext('2d');
+            if (iwPerfByDecileChart) iwPerfByDecileChart.destroy();
+
+            iwPerfByDecileChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(chronological) },
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 11, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const count = ctx.dataset._counts ? ctx.dataset._counts[ctx.dataIndex] : '';
+                                    const countStr = count ? ` (${count} FIs)` : '';
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}${countStr}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] + ' \u2014 ' + provider,
+                                color: '#db7093',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        async function renderIwCompareChart() {
+            const prov1 = document.getElementById('iw-compare-provider1').value;
+            const prov2 = document.getElementById('iw-compare-provider2').value;
+            const filter = document.getElementById('iw-compare-decile').value;
+            const metric = document.getElementById('iw-compare-metric').value;
+
+            let runs;
+            let filterLabel;
+            const decileLabels = ['Top 10%', '10\u201320%', '20\u201330%', '30\u201340%', '40\u201350%',
+                                  '50\u201360%', '60\u201370%', '70\u201380%', '80\u201390%', 'Bottom 10%'];
+
+            if (filter === '') {
+                if (!iwPerfChartData) return;
+                runs = iwPerfChartData;
+                filterLabel = 'All Institutions';
+            } else if (String(filter).startsWith('top_')) {
+                if (!iwCompareTopNCache[filter]) {
+                    const progressEl = document.getElementById('iw-compare-progress');
+                    const barEl = document.getElementById('iw-compare-progress-bar');
+                    const textEl = document.getElementById('iw-compare-progress-text');
+                    progressEl.style.display = '';
+                    barEl.style.width = '30%'; textEl.textContent = 'Fetching\u2026';
+                    try {
+                        const res = await fetch(BASE + '/api/history?top_n=' + filter.replace('top_', ''));
+                        barEl.style.width = '90%'; textEl.textContent = 'Processing\u2026';
+                        iwCompareTopNCache[filter] = await res.json();
+                        barEl.style.width = '100%'; textEl.textContent = 'Done';
+                        setTimeout(() => { progressEl.style.display = 'none'; }, 400);
+                    } catch (e) {
+                        console.error('Failed to load IW compare data:', e);
+                        textEl.textContent = 'Error';
+                        return;
+                    }
+                }
+                runs = iwCompareTopNCache[filter];
+                filterLabel = 'Top ' + filter.replace('top_', '');
+            } else {
+                if (!allDecileData) { await ensureAllDecileData(); }
+                if (!allDecileData) return;
+                runs = allDecileData[filter];
+                filterLabel = decileLabels[parseInt(filter)] || 'Decile ' + filter;
+            }
+
+            if (!runs || runs.length === 0) return;
+
+            const provColors = {
+                'Plaid':    { line: '#5dade2', bg: 'rgba(93,173,226,0.15)' },
+                'Finicity': { line: '#2d8659', bg: 'rgba(45,134,89,0.15)' },
+                'MX':       { line: '#F79E1B', bg: 'rgba(247,158,27,0.15)' },
+            };
+            const metricLabels = {
+                weighted: 'Weighted Score (IW)',
+                success: 'Success Rate (IW)',
+                longevity: 'Longevity (IW)',
+                update: 'Update Frequency (IW)',
+            };
+
+            const chronological = [...runs].reverse();
+            const labels = chronological.map(r => r.started_at);
+
+            const makeDataset = (prov, dashed) => {
+                const colors = provColors[prov] || { line: '#888', bg: 'rgba(136,136,136,0.15)' };
+                return {
+                    label: prov,
+                    data: chronological.map(r => {
+                        const p = (r.iw_providers || {})[prov];
+                        return p ? p[metric] : null;
+                    }),
+                    _counts: chronological.map(r => {
+                        const p = (r.iw_providers || {})[prov];
+                        return p ? p.count : 0;
+                    }),
+                    borderColor: colors.line,
+                    backgroundColor: colors.bg,
+                    borderWidth: 2.5,
+                    borderDash: dashed ? [6, 3] : [],
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: colors.line,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true,
+                };
+            };
+
+            const datasets = [makeDataset(prov1, false)];
+            if (prov2 !== prov1) datasets.push(makeDataset(prov2, true));
+
+            const ctx = document.getElementById('iw-compare-chart').getContext('2d');
+            if (iwCompareChart) iwCompareChart.destroy();
+
+            iwCompareChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        sampleSizeAnnotation: { transitionIndex: findSampleSizeTransition(chronological) },
+                        compareFiAnnotation: true,
+                        legend: {
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, weight: '600' },
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return filterLabel + ' \u2014 ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const count = ctx.dataset._counts ? ctx.dataset._counts[ctx.dataIndex] : '';
+                                    const countStr = count ? ` (${count} FIs)` : '';
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'}${countStr}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric] + ' \u2014 ' + filterLabel,
+                                color: '#db7093',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Top 50 Institutions ---
+        async function loadTop50() {
+            const n = document.getElementById('top50-count').value;
+            const progressEl = document.getElementById('top50-progress');
+            const barEl = document.getElementById('top50-progress-bar');
+            const textEl = document.getElementById('top50-progress-text');
+            progressEl.style.display = '';
+            barEl.style.width = '10%';
+            textEl.textContent = 'Fetching…';
+            try {
+                const res = await fetch(BASE + '/api/top-institutions-history?n=' + n);
+                barEl.style.width = '80%';
+                textEl.textContent = 'Processing…';
+                top50Data = await res.json();
+                barEl.style.width = '100%';
+                textEl.textContent = 'Done';
+                setTimeout(() => { progressEl.style.display = 'none'; }, 600);
+                document.getElementById('top50-section').style.display = '';
+                renderTop50Chart();
+            } catch (e) {
+                console.error('Failed to load top institutions:', e);
+                textEl.textContent = 'Error';
+            }
+        }
+
+        function renderTop50Chart() {
+            if (!top50Data || top50Data.length === 0) return;
+
+            const metric = document.getElementById('top50-metric').value;
+            const provColors = {
+                'Plaid': '#5dade2',
+                'Finicity': '#2d8659',
+                'MX': '#F79E1B',
+                'Unknown': '#555',
+            };
+
+            const metricLabels = {
+                weighted: 'Weighted Score',
+                success: 'Success Rate',
+                longevity: 'Longevity',
+                update: 'Update Frequency',
+            };
+
+            // Collect all unique dates across all institutions
+            const allDates = new Set();
+            top50Data.forEach(inst => inst.history.forEach(h => allDates.add(h.date)));
+            const labels = [...allDates].sort();
+
+            const datasets = top50Data.map((inst, idx) => {
+                const dateMap = {};
+                inst.history.forEach(h => { dateMap[h.date] = h; });
+
+                // Build segment colors based on provider at each point
+                const pointColors = labels.map(d => {
+                    const h = dateMap[d];
+                    return h ? (provColors[h.provider] || provColors['Unknown']) : provColors['Unknown'];
+                });
+
+                // Segment the line by provider color changes
+                const segmentColor = (ctx) => {
+                    const i = ctx.p0DataIndex;
+                    return pointColors[i] || provColors['Unknown'];
+                };
+
+                return {
+                    label: `#${inst.current_rank} ${inst.institution_name}`,
+                    data: labels.map(d => {
+                        const h = dateMap[d];
+                        return h ? h[metric] : null;
+                    }),
+                    _history: labels.map(d => dateMap[d] || null),
+                    segment: {
+                        borderColor: segmentColor,
+                    },
+                    borderColor: provColors[inst.current_provider] || provColors['Unknown'],
+                    borderWidth: 1.5,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: pointColors,
+                    fill: false,
+                    tension: 0.3,
+                    spanGaps: true,
+                    hidden: idx >= 10,  // show first 10 by default
+                };
+            });
+
+            const ctx = document.getElementById('top50-chart').getContext('2d');
+            if (top50Chart) top50Chart.destroy();
+
+            top50Chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#8b8fa3',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 10 },
+                                boxWidth: 8,
+                                padding: 8,
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e2130',
+                            titleColor: '#e1e4eb',
+                            bodyColor: '#8b8fa3',
+                            borderColor: '#2e3241',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    const dt = new Date(items[0].label);
+                                    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                },
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    const h = ctx.dataset._history ? ctx.dataset._history[ctx.dataIndex] : null;
+                                    const prov = h ? h.provider : '?';
+                                    const rank = h ? '#' + h.rank : '';
+                                    return ` ${ctx.dataset.label}: ${v != null ? v.toFixed(1) + '%' : 'N/A'} [${prov}] ${rank}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                tooltipFormat: 'PPp',
+                                displayFormats: { hour: 'MMM d, ha', day: 'MMM d', week: 'MMM d', month: 'MMM yyyy' },
+                            },
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', maxTicksLimit: 10 },
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(46,50,65,0.5)' },
+                            ticks: { color: '#8b8fa3', callback: v => v + '%' },
+                            title: {
+                                display: true,
+                                text: metricLabels[metric],
+                                color: '#8b8fa3',
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load top 50 on page init
+        loadTop50();
 
         // --- Provider Share Over Time ---
         let shareChart = null;
